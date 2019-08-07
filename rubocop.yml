@@ -1,0 +1,56 @@
+---
+AllCops:
+  DisplayCopNames:    true
+  DisplayStyleGuide:  true
+  StyleGuideCopsOnly: true
+  TargetRubyVersion:  2.6
+  Exclude:
+    - lib/tasks/*.rake
+    - vendor/**/*
+    - tmp/**/*
+
+Bundler/DuplicatedGem:
+  Enabled: false
+
+Naming/FileName:
+  Exclude:
+    - lib/sabo_tabby.rb
+
+Style/CaseEquality:
+  Enabled: false
+
+Style/ClassAndModuleChildren:
+  Enabled: false
+
+Style/ClassVars:
+  Enabled: false
+
+Style/Documentation:
+  Enabled: false
+
+Style/DoubleNegation:
+  Enabled: false
+
+Style/Lambda:
+  Exclude:
+    - spec/**/*.rb
+
+Style/LambdaCall:
+  Enabled: false
+
+Style/ModuleFunction:
+  Enabled: false
+
+Style/RescueModifier:
+  Exclude:
+    - spec/**/*.rb
+
+Style/Semicolon:
+  Exclude:
+    - spec/**/*.rb
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/StringLiteralsInInterpolation:
+EnforcedStyle: double_quotes

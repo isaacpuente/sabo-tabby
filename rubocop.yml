@@ -3,54 +3,65 @@ AllCops:
   DisplayCopNames:    true
   DisplayStyleGuide:  true
   StyleGuideCopsOnly: true
-  TargetRubyVersion:  2.6
+  TargetRubyVersion:  2.5
   Exclude:
     - lib/tasks/*.rake
     - vendor/**/*
     - tmp/**/*
 
-Bundler/DuplicatedGem:
+# Metrics/AbcSize:
+  # Make it large for now
+#  Max: 20
+# Metrics/ClassLength:
+#   Max: 120
+#   Exclude:
+#     - '**/application.rb'
+#     - '**/routes/**/*'
+Metrics/LineLength:
   Enabled: false
-
-Naming/FileName:
-  Exclude:
-    - lib/sabo_tabby.rb
-
-Style/CaseEquality:
+  # Metrics/MethodLength:
+  #   # Make it large for now
+  #   Max: 20
+Layout/AlignParameters:
+  EnforcedStyle: with_fixed_indentation
+Layout/IndentationWidth:
   Enabled: false
+Layout/SpaceInsideBlockBraces:
+  EnforcedStyle: space
+Layout/SpaceInsideHashLiteralBraces:
+  EnforcedStyle: no_space
 
-Style/ClassAndModuleChildren:
+Style/Alias:
+  EnforcedStyle: prefer_alias
+Style/BlockDelimiters:
+  EnforcedStyle: semantic
+Style/ColonMethodCall:
   Enabled: false
-
-Style/ClassVars:
-  Enabled: false
-
 Style/Documentation:
   Enabled: false
-
 Style/DoubleNegation:
   Enabled: false
-
+Style/FrozenStringLiteralComment:
+  Enabled: false
+Style/IfUnlessModifier:
+  Enabled: false
 Style/Lambda:
-  Exclude:
-    - spec/**/*.rb
-
+  Enabled: false
 Style/LambdaCall:
   Enabled: false
-
-Style/ModuleFunction:
+Style/PercentLiteralDelimiters:
   Enabled: false
-
-Style/RescueModifier:
-  Exclude:
-    - spec/**/*.rb
-
-Style/Semicolon:
-  Exclude:
-    - spec/**/*.rb
-
+Style/RegexpLiteral:
+  EnforcedStyle: mixed
+Style/SpecialGlobalVars:
+  Enabled: false
+Style/StabbyLambdaParentheses:
+  EnforcedStyle: require_no_parentheses
 Style/StringLiterals:
   EnforcedStyle: double_quotes
-
-Style/StringLiteralsInInterpolation:
-EnforcedStyle: double_quotes
+Style/TrailingCommaInArguments:
+  Enabled: false
+Style/TrailingCommaInLiteral:
+  Enabled: false
+Naming/MethodName:
+  Enabled: false

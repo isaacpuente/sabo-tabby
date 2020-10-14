@@ -9,7 +9,7 @@ RSpec.describe SaboTabby::Error do
   subject(:error) { described_class.new(error_mapper) }
 
   let(:error_mapper) { validation_error_mapper }
-  let(:scope) { StandardError.new("Ooops") }
+  let(:scope) { instance_double("StandardError", message: "Ooops") }
 
   describe "#initialize" do
     it "sets readers" do
@@ -18,37 +18,36 @@ RSpec.describe SaboTabby::Error do
       expect(error.mappers).to eq({error_mapper.name => error_mapper})
     end
   end
-  describe "#with" do
-    let(:mappers) {
-      ["obj_hash" => instance_double("StandarErrorMapper")]
-    }
-
-    it "sets mappers and options ivars" do
-      with = error.with(mappers: mappers, include: [:sand_box])
-      expect(with.mappers).to eq(mappers)
-      expect(with.options).to eq({include: [:sand_box]})
-    end
-    it "returns self" do
-      with = error.with(mappers: mappers, include: [:sand_box])
-      expect(with).to eq(error)
-    end
-    context "no mappers arg" do
-      it "skips setting mappers ivar" do
-        with = error.with(include: [:sand_box])
-        expect(with.mappers).to eq({error_mapper.name => error_mapper})
-        expect(with.options).to eq({include: [:sand_box]})
-      end
-    end
-  end
   describe "#document" do
     it "returns error document" do
       expect(error.document(scope))
         .to eq(
-          detail: "Ooops Name must be filled",
-          status: "422",
-          title: "Validation error",
-          code: "3"
-        )
+          [
+            {
+              detail: "Ooops Name must be filled",
+              status: "422",
+              title: "Validation error",
+              code: "3",
+              source: {pointer: "/data/origin"}
+            }
+          ]
+      )
+    end
+    context "without source" do
+      let(:error_mapper) { standard_error_mapper }
+      it "returns error document" do
+        expect(error.document(scope))
+          .to eq(
+            [
+              {
+                detail: "Ooops User must exist.",
+                status: "400",
+                title: "Error",
+                code: "4"
+              }
+            ]
+          )
+      end
     end
   end
   describe "#title" do
@@ -68,14 +67,16 @@ RSpec.describe SaboTabby::Error do
   end
   describe "#detail" do
     it "returns detail message" do
-      expect(error.detail(scope)).to eq("Ooops Name must be filled")
+      expect(error.detail(scope)).to eq(["Ooops Name must be filled"])
     end
   end
-  xdescribe "#source" do
-    it "returns source hash"
-    context "no source" do
-      it "returns empty hash"
+  describe "#source" do
+    context "origin is nil" do
+      it "returns empty source object" do
+        expect(error.source(nil)).to eq({})
+      end
     end
+    it "returns source object"
   end
   describe "#code_value" do
     it "returns code value" do

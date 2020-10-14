@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# auto_register: false
+
 require "dry-initializer"
 require "sabo_tabby/mapper/settings"
 require "sabo_tabby/error"
@@ -17,7 +19,7 @@ module SaboTabby
       end
 
       module InstanceMethods
-        def initialize(**options)
+        def initialize
           klass = self.class
           klass.settings.each do |key|
             param_name = key.to_s.split("_")[1..].join("_").to_sym
@@ -25,18 +27,18 @@ module SaboTabby
             klass.param name, default: proc {
               case name
               when :type
-                options.fetch(name, klass.send(key) || klass.send(:_resource))
+                # options.fetch(name, klass.send(key) || klass.send(:_resource))
+                klass.send(key) || klass.send(:_resource)
               else
-                options.fetch(name, klass.send(key))
+                klass.send(key)
               end
             }
           end
-          klass.param :resource, default: proc { SaboTabby::Error.new(self, options) }
           super()
         end
 
-        def with(**options)
-          tap { resource.with(**options) }
+        def resource(**options)
+          @resource ||= SaboTabby::Error.new(self, **options)
         end
       end
 
@@ -68,14 +70,19 @@ module SaboTabby
         end
 
         def detail(&block)
-          blk = block_given? ? block : ->error { {message: error.message, origin: ""} }
+          blk = block_given? ? block : ->error { error.message }
           _setting(:detail, blk, nil)
+        end
+
+        def origin(&block)
+          blk = block_given? ? block : proc { nil }
+          _setting(:origin, blk, nil)
         end
 
         private
 
         def dsl_methods
-          %i(type status code title detail)
+          %i(type status code title detail origin)
         end
       end
     end

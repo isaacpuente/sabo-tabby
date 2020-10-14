@@ -27,13 +27,4 @@ RSpec.describe SaboTabby::Relationship do
       end
     end
   end
-  describe "#with" do
-    it "initilizes new instance with given parent" do
-      result = relationship.with(
-        instance_double("SaboTabby::Resource", mapper: nil, options: {}, mappers: {})
-      )
-      expect(result).not_to eq(relationship)
-      expect(result.class).to eq(relationship.class)
-    end
-  end
 end

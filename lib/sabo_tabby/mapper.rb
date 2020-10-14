@@ -1,9 +1,12 @@
 # frozen_string_literal: true
 
+# auto_register: false
+
 require "dry-initializer"
 require "dry-core"
 require "sabo_tabby/mapper/settings"
 require "sabo_tabby/resource"
+require "sabo_tabby/helpers"
 
 module SaboTabby
   module Mapper
@@ -17,37 +20,62 @@ module SaboTabby
     end
 
     module InstanceMethods
-      def initialize(**options)
+      def initialize
         klass = self.class
+        byebug if %w(UserProjectStatistic UserInspirationStatistic UserFurnitureStatistic).include?(klass.name)
         klass.settings.each do |key|
           param_name = key.to_s.split("_")[1..].join("_").to_sym
           name = param_name == :resource ? :name : param_name
           klass.param name, default: proc {
             case name
             when :type
-              options.fetch(name, klass.send(key) || klass.send(:_resource))
+              klass.send(key) || klass.send(:_resource)
             else
-              options.fetch(name, klass.send(key))
+              klass.send(key)
             end
           }
         end
-        klass.param :resource, default: proc { SaboTabby::Resource.new(self, options) }
         super()
       end
 
-      def with(**options)
-        tap { resource.with(**options) }
+      def resource(mappers: {}, **options)
+        return @resource if same_resource?(mappers, options)
+
+        @resource = SaboTabby::Resource.new(self, options, mappers)
+      end
+
+      def compound_relationships(mapper = self)
+        mapper.relationships.one
+          .merge(mapper.relationships.many)
+          .select { |_rel_name, rel_opts| rel_opts.fetch(:include, false) }
+      end
+
+      private
+
+      def same_resource?(mappers, options)
+        @resource && @resource.mappers == mappers && @resource.options == options
       end
     end
 
     module ClassMethods
+      include Helpers
+
+      def inherited(base)
+        base.instance_variable_set(
+          "@config",
+          Dry::Configurable::Config.new(config._settings)
+        )
+        # SaboTabby::Container.register("mappers.#{resource_name(base)}", new)
+      end
+
       def resource(name = Undefined)
         _setting(:resource, name).tap do
           next if name == Undefined
 
           dsl_methods.each { |method_name| send(method_name) }
           yield if block_given?
-          SaboTabby::Container.register("mappers.#{name}", new)
+          #byebug if %i(user_inspiration_statistic user_furniture_statistic).include?(name)
+          container.register("mappers.#{name}", new) unless container.key?("mappers.#{name}")
         end
       end
 
@@ -57,6 +85,10 @@ module SaboTabby
 
       def type(name = Undefined)
         _setting(:type, name)
+      end
+
+      def entity(name = Undefined)
+        _setting(:entity, name)
       end
 
       def resource_identifier(id = :id)
@@ -99,11 +131,15 @@ module SaboTabby
       private
 
       def dsl_methods
-        %i(link type resource_identifier attributes dynamic_attributes meta relationships)
+        %i(link type resource_identifier attributes dynamic_attributes meta relationships entity)
       end
 
       def inflector
         @inflector ||= SaboTabby::Container[:inflector]
+      end
+
+      def container
+        SaboTabby::Container
       end
     end
   end

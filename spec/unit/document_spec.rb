@@ -12,20 +12,23 @@ RSpec.describe SaboTabby::Document do
   let(:resource) { the_cat }
   let(:options) { {} }
   let(:mappers) { loaded_mappers }
-  let(:pagination) { instance_double("SaboTabby::Pagination", with: with_pagination) }
+  let(:loader) {
+    instance_double("SaboTabby::Mapper::Loader", init_mappers: mappers, compound_paths: [])
+  }
+  let(:pagination) {
+    instance_double("SaboTabby::Pagination", meta: pagination_meta, links: pagination_links)
+  }
+  let(:pagination_class) { class_double("SaboTabby::Pagination", new: pagination) }
   let(:with_pagination) {
     instance_double("SaboTabby::Pagination", meta: pagination_meta, links: pagination_links)
   }
   let(:pagination_meta) { {total: 32, pages: 2} }
   let(:pagination_links) { {self: "", last: "", prev: "", next: ""} }
   let(:default_pagination) { instance_double("SaboTabby::Mapper::DefaultPagination") }
-  let(:compound_document) {
-    instance_double(
-      "SaboTabby::Document::Compound",
-      with: with_compound_document
-    )
+  let(:compound_document_class) {
+    class_double("SaboTabby::Document::Compound", new: compound_document)
   }
-  let(:with_compound_document) {
+  let(:compound_document) {
     instance_double(
       "SaboTabby::Document::Compound",
       mappers: mappers,
@@ -45,18 +48,13 @@ RSpec.describe SaboTabby::Document do
   let(:included) { [{id: "3", type: "people"}, {id: "1", type: "nap_spot"}] }
 
   before do
-    SaboTabby::Container.stub("document.compound", compound_document) if options[:include]
-    SaboTabby::Container.stub("pagination", pagination) if options[:pager]
+    stub_const("SaboTabby::Document::Compound", compound_document_class) if options[:include]
+    stub_const("SaboTabby::Pagination", pagination_class) if options[:pager]
 
     stub_const(
       "SaboTabby::Mapper::Loader",
-      class_double("SaboTabby::Mapper::Loader", for: mappers)
+      class_double("SaboTabby::Mapper::Loader", new: loader)
     )
-  end
-
-  after do
-    SaboTabby::Container.unstub("document.compound")
-    SaboTabby::Container.unstub("pagination") if options[:pager]
   end
 
   describe "#initialize" do
@@ -69,9 +67,6 @@ RSpec.describe SaboTabby::Document do
 
   describe "#call" do
     before do
-      allow(cat_mapper.resource).to receive(:with)
-        .with(mappers: mappers)
-        .and_return(cat_mapper.resource)
       allow(cat_mapper.resource)
         .to receive(:document).with(resource).and_return(resource_document[:data])
     end
@@ -92,9 +87,6 @@ RSpec.describe SaboTabby::Document do
         expect(document.call).to eq(resource_document)
       end
       context "paginated" do
-        before do
-          allow(pagination).to receive(:with).with(mappers, {pager: pager}).and_return(pagination)
-        end
         let(:options) { {pager: double("Pager")} }
         it "returns jsonapi resource document with links and meta" do
           expect(document.call)
@@ -119,9 +111,6 @@ RSpec.describe SaboTabby::Document do
     end
     context "error" do
       before do
-        allow(standard_error_mapper.resource).to receive(:with)
-          .with(mappers: mappers)
-          .and_return(standard_error_mapper.resource)
         allow(standard_error_mapper.resource)
           .to receive(:document).with(resource).and_return(error_document[:errors].first)
       end
@@ -147,27 +136,20 @@ RSpec.describe SaboTabby::Document do
 
   describe "#resource_name" do
     it "returns resource class name snake cased" do
-      expect(document.resource_name).to eq("cat")
+      expect(document.resource_name(resource)).to eq("cat")
     end
     context "collection" do
       let(:resource) { nap_spots }
 
       it "returns first element resource class name snake cased" do
-        expect(document.resource_name).to eq("nap_spot")
+        expect(document.resource_name(resource)).to eq("nap_spot")
       end
     end
   end
 
   describe "#mapper_resource" do
-    before do
-      allow(cat_mapper.resource).to receive(:with)
-        .with(mappers: mappers)
-        .and_return(cat_mapper.resource)
-    end
-
     it "returns mapper_resource with mappers passed" do
-      expect(cat_mapper).to receive(:resource).exactly(2).times
-      expect(cat_mapper.resource).to receive(:with).with(mappers: mappers).exactly(1).times
+      expect(cat_mapper).to receive(:resource).exactly(1).times
 
       document.mapper_resource
     end
@@ -194,8 +176,7 @@ RSpec.describe SaboTabby::Document do
     let(:options) { {include: %i(hooman nap_spot)} }
 
     it "returns sends message to compound document" do
-      expect(compound_document).to receive(:with).with(mappers, options)
-      expect(with_compound_document).to receive(:call).with(resource)
+      expect(compound_document).to receive(:call).with(resource)
 
       document.compound_document
     end

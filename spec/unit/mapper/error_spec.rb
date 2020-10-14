@@ -19,7 +19,7 @@ RSpec.describe SaboTabby::Mapper::Error do
   end
 
   describe "#initialize" do
-    let(:readers) { %i(type status code title detail resource name) }
+    let(:readers) { %i(type status code title detail origin resource name) }
     it "sets classes settings as readers" do
       readers.each do |r|
         expect(error_mapper).to respond_to(r)
@@ -28,7 +28,7 @@ RSpec.describe SaboTabby::Mapper::Error do
           expect(error_mapper.send(r)).to eq(error_mapper.class.send(:resource))
         when :resource
           expect(error_mapper.send(r)).to eq(error)
-        when :detail
+        when :detail, :origin
           expect(error_mapper.send(r)).to be_a(Proc)
         when :type
           expect(error_mapper.send(r)).to eq(:standard_error)
@@ -53,29 +53,6 @@ RSpec.describe SaboTabby::Mapper::Error do
         it "sets mapper's name as value" do
           expect(error_mapper.type).to eq(error_mapper.name)
         end
-      end
-    end
-  end
-  describe "#with" do
-    let(:options) { {include: [:nap_spot]} }
-    it "sends given options to resource" do
-      expect(error).to receive(:with).with(**options)
-      error_mapper.with(**options)
-    end
-  end
-  describe "#detail" do
-    let(:standard_error) { instance_double("StandardError", message: "Standard error") }
-    context "with block" do
-      it "return default detail setting's block value" do
-        expect(error_mapper.detail.(standard_error))
-          .to eq(standard_error.message)
-      end
-    end
-    context "without block" do
-      let(:error_mapper) { WithoutBlockErrorMapper.new }
-      it "return default block value" do
-        expect(error_mapper.detail.(standard_error))
-          .to eq(message: standard_error.message, origin: "")
       end
     end
   end

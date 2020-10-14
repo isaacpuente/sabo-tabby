@@ -30,13 +30,11 @@ RSpec.describe SaboTabby::Mapper::Pagination do
         expect(pagination.resource).to be_nil
       end
     end
-
     context "with arg" do
       it "returns defined value" do
         expect(pagination.resource).to eq(:default_pagination)
       end
     end
-
     context "without block" do
       it "initializes all settings to default values" do
         dsl_methods.each do |method, value|
@@ -45,7 +43,6 @@ RSpec.describe SaboTabby::Mapper::Pagination do
         end
       end
     end
-
     context "with block" do
       let(:dsl_methods) {
         {

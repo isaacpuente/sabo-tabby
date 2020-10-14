@@ -1,44 +1,46 @@
 # frozen_string_literal: true
 
+# auto_register: false
+
 require "dry-initializer"
 require "forwardable"
 require "sabo_tabby/document/compound"
 require "sabo_tabby/mapper/loader"
 require "sabo_tabby/pagination"
+require "sabo_tabby/helpers"
+require "benchmark"
 
 module SaboTabby
   class Document
     extend Forwardable
     extend Dry::Initializer
     include Dry::Core::Constants
+    include Helpers
 
     param :resource
-    param :options, default: proc { EMPTY_HASH }
-    param :mappers, default: proc { Mapper::Loader.for(resource_name, **options) }
+    param :options, default: proc { _options }
+    param :loader, default: proc { Mapper::Loader.new(resource, name, **options) }
+    param :mappers, default: proc { loader.init_mappers }
 
     def_delegator :mapper_resource, :document
 
     def call
       return error_document if error?
 
+      # p "*********************************"
+      # p Benchmark.bm { |x|
+      #   x.report("resource document") { @hmm = resource_document }
+      # }
       resource_document
+      #@hmm
     end
 
-    def resource_name
-      @resource_name ||= (collection? ? resource.first : resource).then do |res|
-        res
-          .class
-          .name
-          .split("::")
-          .last
-          .split(/(?=\p{upper}\p{lower}+)/)
-          .map(&:downcase)
-          .join("_")
-      end
+    def name
+      @name ||= resource_name(resource)
     end
 
     def mapper_resource
-      @mapper_resource ||= mappers[resource_name].resource.with(mappers: mappers)
+      @mapper_resource ||= mappers[name].resource(mappers: mappers, **options)
     end
 
     def meta
@@ -48,13 +50,13 @@ module SaboTabby
     end
 
     def compound_document
-      return {} unless options[:include]
+      return {} unless compound_document?
 
-      @compound ||= container["document.compound"].with(mappers, options).(resource)
+      @compound ||= SaboTabby::Document::Compound.new(loader, options).(resource)
     end
 
     def error?
-      options.fetch(:error, false) || resource_name.include?("error")
+      options.fetch(:error, false) || name.include?("error")
     end
 
     def collection?
@@ -62,16 +64,24 @@ module SaboTabby
     end
 
     def paginated?
-      options.key?(:pager)
+      !options.fetch(:pager, nil).nil?
+    end
+
+    def compound_document?
+      options.fetch(:auto_compound, false) || options.fetch(:include, false)
     end
 
     private
 
     def error_document
-      {errors: Array(resource).map { |r| document(r) }}
+      {errors: Array(resource).flat_map { |r| document(r) }}
     end
 
     def resource_document
+      # p Benchmark.bm { |x|
+      #   x.report("resource") {  @dataa = collection? ? resource.map { |r| document(r) } : document(resource) }
+      #   x.report("compound") {  compound_document }
+      # }
       data = collection? ? resource.map { |r| document(r) } : document(resource)
       {data: data}.merge!(compound_document, paginate(meta))
     end
@@ -79,15 +89,23 @@ module SaboTabby
     def paginate(meta)
       return meta unless paginated?
 
-      @pagination = container["pagination"]
-        .with(mappers, options)
+      @pagination = SaboTabby::Pagination.new(mappers, options)
         .then do |pagination|
-          {meta: meta.fetch(:meta, {}).merge(pagination.meta), links: pagination.links}
+          {meta: meta.fetch(:meta, {}).merge!(pagination.meta), links: pagination.links}
         end
     end
 
     def container
       SaboTabby::Container
+    end
+
+    def _options
+      {
+        error: false,
+        auto_compound: false,
+        pager: nil,
+        include: []
+      }
     end
   end
 end

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# auto_register: false
+
 require "dry-initializer"
 require "sabo_tabby/mapper/settings"
 

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# auto_register: false
+
 require "dry-initializer"
 require "forwardable"
 
@@ -29,17 +31,15 @@ module SaboTabby
         rel_scope = relationship_scope(scope, opts[:method])
         next if skip?(rel_scope)
 
-        result[opts.fetch(:as, opts[:method])] = send(type, opts.fetch(:as, name).to_s, rel_scope)
+        result[opts.fetch(:as, opts[:method])] =
+          send(type, opts.fetch(:as, name).to_s, rel_scope, **opts)
       end
     end
 
     def relationship_scope(scope, method)
-      if scope.respond_to?(method)
-        value = scope.send(method)
-        return value unless value.nil? && scope.respond_to?("#{method}_id")
-
-        id_object(scope, method).new
-      elsif scope.respond_to?("#{method}_id")
+      if scope.respond_to?(method) && !skip?(scope.send(method))
+        scope.send(method)
+      elsif scope.respond_to?("#{method}_id") && !skip?(scope.send("#{method}_id"))
         id_object(scope, method).new
       end
     end
@@ -48,27 +48,22 @@ module SaboTabby
       scope.nil? || (scope.is_a?(Array) && scope.empty?)
     end
 
-    def one(name, scope)
+    def one(name, scope, **opts)
+      mapper = parent.mappers[name]
+      type = opts.fetch(:type, mapper.type).to_s
       {
         data: {
-          id: scope.send(parent.mappers[name].resource_identifier).to_s,
-          type: parent.mappers[name].type.to_s
+          type: type,
+          id: scope.send(mapper.resource_identifier).to_s
         }
       }
     rescue => e
       byebug
     end
 
-    def many(name, scope)
+    def many(name, scope, **opts)
       mapper_key = inflector.singularize(name)
-      {
-        data: scope.map { |s|
-          {
-            id: s.send(parent.mappers[mapper_key].resource_identifier).to_s,
-            type: parent.mappers[mapper_key].type.to_s
-          }
-        }
-      }
+      {data: scope.map { |s| one(mapper_key, s, **opts)[:data] }}
     rescue => e
       byebug
     end

@@ -68,6 +68,7 @@ RSpec.describe SaboTabby::Mapper::Error do
       end
     end
   end
+
   describe ".status" do
     it "sets status" do
       expect(validation_error_mapper.status).to eq(422)
@@ -78,6 +79,7 @@ RSpec.describe SaboTabby::Mapper::Error do
       end
     end
   end
+
   describe ".type" do
     it "sets type" do
       expect(validation_error_mapper.type).to eq(:validation_error)
@@ -88,6 +90,7 @@ RSpec.describe SaboTabby::Mapper::Error do
       end
     end
   end
+
   describe ".code" do
     it "sets code" do
       expect(validation_error_mapper.code).to eq(3)
@@ -98,6 +101,7 @@ RSpec.describe SaboTabby::Mapper::Error do
       end
     end
   end
+
   describe ".title" do
     it "sets title" do
       expect(validation_error_mapper.title).to eq("Validation error")
@@ -108,6 +112,7 @@ RSpec.describe SaboTabby::Mapper::Error do
       end
     end
   end
+
   describe ".detail" do
     it "sets detail" do
       expect(validation_error_mapper.detail).to be_a(Proc)
@@ -117,6 +122,19 @@ RSpec.describe SaboTabby::Mapper::Error do
 
       it "sets default block" do
         expect(error_mapper.detail).to be_a(Proc)
+      end
+    end
+  end
+
+  describe ".origin" do
+    it "sets origin" do
+      expect(validation_error_mapper.origin).to be_a(Proc)
+    end
+    context "not set" do
+      let(:error_mapper) { WithoutBlockErrorMapper }
+
+      it "sets default block" do
+        expect(error_mapper.origin).to be_a(Proc)
       end
     end
   end

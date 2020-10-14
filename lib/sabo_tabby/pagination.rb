@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
+# auto_register: false
+
 require "dry-initializer"
+require "forwardable"
 
 module SaboTabby
   class Pagination
@@ -42,10 +45,6 @@ module SaboTabby
 
     def pager
       @pager ||= pagination.pager
-    end
-
-    def with(mappers, options)
-      self.class.new(mappers, options)
     end
 
     private

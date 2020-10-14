@@ -6,9 +6,11 @@ require "sabo_tabby/mapper/loader"
 RSpec.describe SaboTabby::Mapper::Loader do
   include_context "test_data"
 
-  subject(:loader) { described_class.new(options) }
+  subject(:loader) { described_class.new(resource, resource_name, options) }
   let(:options) { {include: [:hooman, :nap_spots]} }
   let(:container) { SaboTabby::Container }
+  let(:resource) { the_cat }
+  let(:resource_name) { cat_mapper.name.to_s }
   let(:mappers) {
     {
       "cat" => cat_mapper,
@@ -21,7 +23,6 @@ RSpec.describe SaboTabby::Mapper::Loader do
   before do
     mappers.each do |key, mapper|
       container.stub("mappers.#{key}", mapper)
-      allow(mapper).to receive(:with).with(**options).and_return(mapper)
     end
   end
   after do
@@ -30,24 +31,32 @@ RSpec.describe SaboTabby::Mapper::Loader do
     end
   end
 
-  describe ".for" do
-    it "creates new instance of self and returns result from call" do
-      res = described_class.for(String(cat_mapper.name), **options)
-      expect(res).to eq(loaded_mappers)
+  describe "#initialize" do
+    it "sets readers" do
+      expect(loader.resource).to eq(resource)
+      expect(loader.resource_name).to eq(resource_name)
+      expect(loader.options).to eq(options)
+      expect(loader.mappers).to eq({})
+      expect(loader.resource_mapper).to eq(cat_mapper)
     end
   end
-  describe "#call" do
+
+  describe "#init_mappers" do
     context "success" do
       it "loads resource and resource's relationship mappers" do
-        expect(loader.(String(cat_mapper.name))).to eq(loaded_mappers)
+        expect(loader.init_mappers).to eq(loaded_mappers)
+      end
+      context "compound" do
+        it "inlcudes compound document mappers" do
+          expect(loader.init_mappers(compound: true)).to eq(loaded_mappers)
+        end
       end
       context "error" do
+        subject(:loader) {
+          described_class.new(StandardError.new("oops"), validation_error_mapper.name.to_s, options)
+        }
         before do
           container.stub("mappers.errors.validation_error", validation_error_mapper)
-          allow(validation_error_mapper)
-            .to receive(:with)
-            .with(**options)
-            .and_return(validation_error_mapper)
         end
         after do
           container.unstub("mappers.errors.validation_error")
@@ -57,7 +66,7 @@ RSpec.describe SaboTabby::Mapper::Loader do
         end
         context "through mapper name" do
           it "loads error mappers" do
-            expect(loader.(String(validation_error_mapper.name))).to eq(loaded_error_mappers)
+            expect(loader.init_mappers).to eq(loaded_error_mappers)
           end
         end
       end
@@ -65,11 +74,46 @@ RSpec.describe SaboTabby::Mapper::Loader do
     context "failure" do
       context "unkown mapper name" do
         it "raises exception" do
-          expect { loader.("dog") }.to(
+          expect { described_class.new("dog", options) }.to(
             raise_error(Dry::System::ComponentLoadError, /could not load component/)
           )
         end
       end
     end
+  end
+
+
+  xdescribe "#mapper" do
+    context "error" do
+      it "returns error mapper"
+    end
+    it "returns resource mapper"
+  end
+
+  xdescribe "#error_mapper" do
+    context "unknown mapper" do
+      it "returns standard error mapper"
+    end
+    it "returns error mapper"
+  end
+
+  xdescribe "#relationship_mappers" do
+    it "returns resrource's mapper relationship mappers"
+    it "adds resrource's mapper relationship mappers to reader"
+  end
+
+  xdescribe "#compound_mappers" do
+    context "options include"
+    context "mapper relationship settings include"
+  end
+
+  xdescribe "#compound_path" do
+    context "options include"
+    context "mapper relationship settings include"
+  end
+
+  xdescribe "#error?" do
+    context "true"
+    context "false"
   end
 end

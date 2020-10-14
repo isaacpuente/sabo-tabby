@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# auto_register: false
+
 require "dry-initializer"
 require "forwardable"
 
@@ -16,14 +18,16 @@ module SaboTabby
     param :mappers, default: proc { {name => mapper} }
 
     def document(scope)
-      {status: String(status(scope)), title: title(scope), detail: detail(scope)}
-        .merge(code_value(scope))
-    end
-
-    def with(mappers: {}, **opts)
-      tap {
-        @mappers = mappers if mappers.any?
-        @options = opts
+      origins = Array(mapper.origin.(scope))
+      detail(scope).map.with_index { |error, index|
+        {
+          status: String(status(scope)),
+          title: title(scope),
+          detail: error
+        }.merge!(
+          code_value(scope),
+          source(origins[index])
+        )
       }
     end
 
@@ -36,13 +40,13 @@ module SaboTabby
     end
 
     def detail(scope)
-      mapper.detail.(scope)
+      Array(mapper.detail.(scope))
     end
 
-    def source(value)
-      return {} if value.nil? || value.empty?
+    def source(origin)
+      return {} if origin.nil?
 
-      {source: {pointer: value}}
+      {source: {pointer: origin}}
     end
 
     def code_value(scope)

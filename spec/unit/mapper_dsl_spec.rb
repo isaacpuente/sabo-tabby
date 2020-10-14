@@ -66,7 +66,7 @@ RSpec.describe SaboTabby::Mapper do
           attribute: [[:gender, -> {}]],
           relationships: {
             many: {nap_spot: {method: :nap_spots}},
-            one: {hooman: {method: :hooman}, sand_box: {method: :sand_box}}
+            one: {hooman: {method: :hooman, type: :people}, sand_box: {method: :sand_box}}
           },
           meta: {code_name: :feline}
         }
@@ -91,6 +91,7 @@ RSpec.describe SaboTabby::Mapper do
       end
     end
   end
+
   describe ".type" do
     let(:mapper) { HoomanMapper }
 
@@ -105,6 +106,7 @@ RSpec.describe SaboTabby::Mapper do
       end
     end
   end
+
   describe ".meta" do
     let(:mapper) { HoomanMapper }
 
@@ -119,6 +121,7 @@ RSpec.describe SaboTabby::Mapper do
       end
     end
   end
+
   describe ".attributes" do
     let(:mapper) { CatMapper }
 
@@ -133,6 +136,7 @@ RSpec.describe SaboTabby::Mapper do
       end
     end
   end
+
   describe ".resource_identifier" do
     let(:mapper) { NapSpotMapper }
 
@@ -147,6 +151,7 @@ RSpec.describe SaboTabby::Mapper do
       end
     end
   end
+
   describe ".link" do
     let(:mapper) { NapSpotMapper }
 
@@ -161,6 +166,7 @@ RSpec.describe SaboTabby::Mapper do
       end
     end
   end
+
   describe ".attribute" do
     let(:mapper) { CatMapper }
 
@@ -188,13 +194,14 @@ RSpec.describe SaboTabby::Mapper do
         expect(mapper.relationships.many).to eq({})
       end
     end
+
     describe ".one" do
       context "without options" do
         let(:mapper) { CatMapper }
 
         it "sets singularized method name as key and original as method option" do
           expect(mapper.relationships.one).to eq(
-            hooman: {method: :hooman},
+            hooman: {method: :hooman, type: :people},
             sand_box: {method: :sand_box}
           )
         end
@@ -208,6 +215,7 @@ RSpec.describe SaboTabby::Mapper do
         end
       end
     end
+
     describe ".many" do
       context "without options" do
         let(:mapper) { CatMapper }

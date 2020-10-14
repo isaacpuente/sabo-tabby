@@ -131,11 +131,19 @@ RSpec.describe SaboTabby::Document do
             )
           end
         end
-        context "resource collection with relationships and included"
+        xcontext "resource collection with relationships and included" do
+          it "returns compound document"
+        end
       end
-      context "meta"
-      context "pagination"
+      xcontext "meta" do
+        it "returns document with meta object"
+      end
+      xcontext "pagination" do
+        it "returns document with pagination objects"
+      end
     end
-    context "error object"
+    xcontext "error object" do
+      it "returns error document"
+    end
   end
 end

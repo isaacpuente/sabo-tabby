@@ -28,12 +28,4 @@ RSpec.describe SaboTabby::Mapper::Pagination do
       end
     end
   end
-
-  describe "#with" do
-    it "returns new instance" do
-      result = pagination.with(pager: nil)
-      expect(result.class).to eq(pagination.class)
-      expect(result).not_to eq(pagination)
-    end
-  end
 end

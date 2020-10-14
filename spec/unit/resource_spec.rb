@@ -99,27 +99,4 @@ RSpec.describe SaboTabby::Resource do
       expect(resource.meta).to eq(meta: {code_name: :feline})
     end
   end
-
-  describe "#with" do
-    let(:mappers) {
-      ["obj_hash" => instance_double("NapSpotMapper", name: :cat, resource_identifier: :spot_id)]
-    }
-
-    it "sets mappers and options ivars" do
-      with = resource.with(mappers: mappers, include: [:sand_box])
-      expect(with.mappers).to eq(mappers)
-      expect(with.options).to eq({include: [:sand_box]})
-    end
-    it "returns self" do
-      with = resource.with(mappers: mappers, include: [:sand_box])
-      expect(with).to eq(resource)
-    end
-    context "no mappers arg" do
-      it "skips setting mappers ivar" do
-        with = resource.with(include: [:sand_box])
-        expect(with.mappers).to eq({cat_mapper.name.to_s => cat_mapper})
-        expect(with.options).to eq({include: [:sand_box]})
-      end
-    end
-  end
 end

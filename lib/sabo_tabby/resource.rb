@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+# auto_register: false
+
 require "dry-initializer"
 require "forwardable"
 require "sabo_tabby/relationship"
@@ -20,15 +22,20 @@ module SaboTabby
 
     def id(scope)
       return scope if scope.is_a?(Integer)
+      return "" unless scope.respond_to?(mapper.resource_identifier)
 
       scope.send(mapper.resource_identifier)
     end
 
     def attributes(scope)
-      mapper
+      attributes = mapper
         .attributes
-        .each_with_object({}) { |attribute, result| result[attribute] = scope.send(attribute) }
-        .then { |attrs| dynamic_attributes? ? attrs.merge!(dynamic_attributes(scope)) : attrs }
+        .each_with_object({}) do |attribute, result|
+          next unless scope.respond_to?(attribute)
+
+          result[attribute] = scope.send(attribute)
+        end
+      dynamic_attributes? ? attributes.merge!(dynamic_attributes(scope)) : attributes
     end
 
     def dynamic_attributes(scope)
@@ -43,7 +50,8 @@ module SaboTabby
     end
 
     def document(scope)
-      resource_document["#{type}_#{id(scope)}"] ||=
+      #resource_document[document_id(scope)] ||=
+      resource_document[scope.hash] ||=
         identifier(scope)
           .then { |doc| attributes? ? doc.merge!(attributes: attributes(scope)) : doc }
           .then { |doc| meta? ? doc.merge!(meta(scope)) : doc }
@@ -51,22 +59,21 @@ module SaboTabby
     end
 
     def identifier(scope)
-      {id: id(scope).to_s, type: type.to_s}
+      {type: type.to_s, id: id(scope).to_s}
     end
 
     def relationships(scope)
-      relationship.call(scope)
+      # p "*********************************"
+      # p Benchmark.bm { |x|
+      #   x.report("relationships") { relationship.call(scope) }
+      # }
+
+      #resource_relationships[document_id(scope)] ||= relationship.call(scope)
+      resource_relationships[scope.hash] ||= relationship.call(scope)
     end
 
     def meta(_scope = nil)
       {meta: mapper.meta}
-    end
-
-    def with(mappers: {}, **opts)
-      tap {
-        @mappers = mappers if mappers.any?
-        @options = opts
-      }
     end
 
     def relationships?
@@ -74,7 +81,7 @@ module SaboTabby
     end
 
     def attributes?
-      mapper.attributes.any?
+      mapper.attributes.any? || dynamic_attributes?
     end
 
     def dynamic_attributes?
@@ -83,6 +90,10 @@ module SaboTabby
 
     def meta?
       mapper.meta.any?
+    end
+
+    def document_id(scope)
+      "#{type}_#{id(scope)}"
     end
   end
 end

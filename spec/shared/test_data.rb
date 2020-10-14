@@ -16,7 +16,7 @@ class CatMapper
       resource.age / 2
     end
     relationships do
-      one :hooman
+      one :hooman, type: :people
       one :sand_box
       many :nap_spots
     end
@@ -72,6 +72,7 @@ class ValidationErrorMapper
     detail do |error|
       "Validation #{error.message}"
     end
+    origin(&:origin)
   end
 end
 
@@ -162,6 +163,7 @@ RSpec.shared_context "test_data" do
       meta: {code_name: :feline},
       dynamic_attributes: dynamic_attributes,
       relationships: cat_mapper_relationships,
+      compound_relationships: {},
       resource: instance_double("SaboTabby::Resource")
     )
   }
@@ -174,6 +176,7 @@ RSpec.shared_context "test_data" do
       resource_identifier: :id,
       meta: {},
       relationships: hooman_mapper_relationships,
+      compound_relationships: {},
       resource: instance_double("SaboTabby::Resource")
     )
   }
@@ -186,6 +189,7 @@ RSpec.shared_context "test_data" do
       meta: {if_i_fits: :i_sits},
       resource_identifier: :spot_id,
       relationships: nap_spot_mapper_relationships,
+      compound_relationships: {},
       resource: instance_double("SaboTabby::Resource")
     )
   }
@@ -198,6 +202,7 @@ RSpec.shared_context "test_data" do
       meta: {},
       resource_identifier: :id,
       resource: instance_double("SaboTabby::Resource"),
+      compound_relationships: {},
       relationships: sand_box_mapper_relationships
     )
   }
@@ -251,6 +256,7 @@ RSpec.shared_context "test_data" do
       title: "Validation error",
       detail: proc { |error| "#{error.message} Name must be filled" },
       code: "3",
+      origin: proc { "/data/origin" },
       resource: instance_double("SaboTabby::Error")
     )
   }
@@ -263,6 +269,7 @@ RSpec.shared_context "test_data" do
       title: "Error",
       detail: proc { |error| "#{error.message} User must exist." },
       code: "4",
+      origin: proc { nil },
       resource: instance_double("SaboTabby::Error")
     )
   }

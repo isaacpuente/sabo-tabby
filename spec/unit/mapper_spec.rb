@@ -53,11 +53,7 @@ RSpec.describe SaboTabby::Mapper do
       end
     end
   end
-  describe "#with" do
-    let(:options) { {include: [:nap_spot]} }
-    it "sends given options to resource" do
-      expect(resource).to receive(:with).with(**options)
-      mapper.with(**options)
-    end
-  end
+
+  describe "#resource"
+  describe "#compound_relationships"
 end

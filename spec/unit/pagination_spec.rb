@@ -36,11 +36,13 @@ RSpec.describe SaboTabby::Pagination do
         end
       }
   end
+
   after do
     %i(default_pagination custom_pagination).each do |key, _mapper|
       container.unstub("mappers.pagers.#{key}")
     end
   end
+
   describe "#initialize" do
     it "sets readers" do
       expect(pagination.mappers).to eq(mappers)
@@ -84,6 +86,7 @@ RSpec.describe SaboTabby::Pagination do
       end
     end
   end
+
   describe "#links" do
     context "default pager" do
       it "returns links hash" do
@@ -97,6 +100,7 @@ RSpec.describe SaboTabby::Pagination do
       end
     end
   end
+
   describe "#meta" do
     context "default pager" do
       it "returns meta hash" do

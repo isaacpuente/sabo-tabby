@@ -11,7 +11,7 @@ RSpec.describe SaboTabby::Document::Compound do
   let(:loader) {
     instance_double(
       "SaboTabby::Loader",
-      compound_mappers: mappers,
+      mappers: mappers,
       compound_paths: [:hooman, :nap_spot]
     )
   }
@@ -19,9 +19,10 @@ RSpec.describe SaboTabby::Document::Compound do
   let(:options) { {include: [:hooman, :nap_spots]} }
   let(:scope) { the_cat }
   let(:hooman_mapper_resource) {
-    instance_double("SaboTabby::Resource", id: 1, type: :people, name: :hooman)
+    instance_double("SaboTabby::Resource", id: 1, type: :people, name: :hooman, document_id: "people_1")
   }
   let(:nap_spot_mapper_resource) {
+    instance_double("SaboTabby::Resource", id: 1, type: :nap_spot,  name: :nap_spot)
   }
   describe "#call" do
     before do
@@ -38,7 +39,13 @@ RSpec.describe SaboTabby::Document::Compound do
         receive(:document).with(nap_spots[0]).and_return(compound_document[:nap_spot][0])
       )
       allow(nap_spot_mapper_resource).to(
+        receive(:document_id).with(nap_spots[0]).and_return("nap_spot_1")
+      )
+      allow(nap_spot_mapper_resource).to(
         receive(:document).with(nap_spots[1]).and_return(compound_document[:nap_spot][1])
+      )
+      allow(nap_spot_mapper_resource).to(
+        receive(:document_id).with(nap_spots[1]).and_return("nap_spot_2")
       )
     end
     let(:compound_document) {
@@ -77,7 +84,7 @@ RSpec.describe SaboTabby::Document::Compound do
     }
     context "no includes" do
       let(:loader) {
-        instance_double("SaboTabby::Loader", compound_mappers: {}, compound_paths: [])
+        instance_double("SaboTabby::Loader", mappers: {}, compound_paths: [])
       }
       let(:options) { {} }
       it "returns empty compound document" do
@@ -97,7 +104,7 @@ RSpec.describe SaboTabby::Document::Compound do
       end
       it "sends message to resource mapper for each include" do
         expect(hooman_mapper).to receive(:resource).exactly(1).times
-        expect(nap_spot_mapper).to receive(:resource).exactly(1).times
+        expect(nap_spot_mapper).to receive(:resource).exactly(2).times
 
         compound.(scope)
       end
@@ -116,7 +123,7 @@ RSpec.describe SaboTabby::Document::Compound do
       let(:loader) {
         instance_double(
           "SaboTabby::Loader",
-          compound_mappers: mappers,
+          mappers: mappers,
           compound_paths: %w(hooman.nap_spots nap_spot)
         )
       }
@@ -124,6 +131,9 @@ RSpec.describe SaboTabby::Document::Compound do
       before do
         allow(nap_spot_mapper_resource).to(
           receive(:document).with(nap_spots[2]).and_return(compound_document[:nap_spot][2])
+        )
+        allow(nap_spot_mapper_resource).to(
+          receive(:document_id).with(nap_spots[2]).and_return("nap_spot_3")
         )
       end
       it "returns compound document" do
@@ -139,7 +149,7 @@ RSpec.describe SaboTabby::Document::Compound do
       end
       it "sends message to resource mapper for each include" do
         expect(hooman_mapper).to receive(:resource).exactly(1).times
-        expect(nap_spot_mapper).to receive(:resource).exactly(1).times
+        expect(nap_spot_mapper).to receive(:resource).exactly(3).times
 
         compound.(scope)
       end

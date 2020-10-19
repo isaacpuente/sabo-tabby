@@ -22,7 +22,6 @@ module SaboTabby
     module InstanceMethods
       def initialize
         klass = self.class
-        byebug if %w(UserProjectStatistic UserInspirationStatistic UserFurnitureStatistic).include?(klass.name)
         klass.settings.each do |key|
           param_name = key.to_s.split("_")[1..].join("_").to_sym
           name = param_name == :resource ? :name : param_name
@@ -61,11 +60,7 @@ module SaboTabby
       include Helpers
 
       def inherited(base)
-        base.instance_variable_set(
-          "@config",
-          Dry::Configurable::Config.new(config._settings)
-        )
-        # SaboTabby::Container.register("mappers.#{resource_name(base)}", new)
+        super
       end
 
       def resource(name = Undefined)
@@ -74,7 +69,6 @@ module SaboTabby
 
           dsl_methods.each { |method_name| send(method_name) }
           yield if block_given?
-          #byebug if %i(user_inspiration_statistic user_furniture_statistic).include?(name)
           container.register("mappers.#{name}", new) unless container.key?("mappers.#{name}")
         end
       end

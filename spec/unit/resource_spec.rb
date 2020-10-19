@@ -20,8 +20,6 @@ RSpec.describe SaboTabby::Resource do
       expect(resource.mapper).to eq(cat_mapper)
       expect(resource.options).to eq(options)
       expect(resource.mappers).to eq({cat_mapper.name.to_s => cat_mapper})
-      expect(resource.resource_document).to eq({})
-      #expect(resource.resource_relationships).to eq({})
     end
   end
 
@@ -53,7 +51,14 @@ RSpec.describe SaboTabby::Resource do
   describe "#attributes" do
     it "returns defined resource attributes hash" do
       expect(resource.attributes(the_cat))
-        .to eq(age: the_cat.age, family: the_cat.family, name: the_cat.name, gender: "Ms. Le prr")
+        .to eq(
+          attributes: {
+            age: the_cat.age,
+            family: the_cat.family,
+            name: the_cat.name,
+            gender: "Ms. Le prr"
+          }
+        )
     end
   end
 
@@ -92,7 +97,7 @@ RSpec.describe SaboTabby::Resource do
     context "no meta mapper setting" do
       let(:mapper) { hooman_mapper }
       it "returns empty object" do
-        expect(resource.meta).to eq(meta: {})
+        expect(resource.meta).to eq({})
       end
     end
     it "returns resource meta object" do

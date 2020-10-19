@@ -13,8 +13,6 @@ module SaboTabby
             .reject { |n| n == exclude_word }
             .map(&:downcase).join("_")
         end
-    rescue => e
-      byebug
     end
   end
 end

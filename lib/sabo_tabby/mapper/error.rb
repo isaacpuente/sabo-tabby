@@ -27,7 +27,6 @@ module SaboTabby
             klass.param name, default: proc {
               case name
               when :type
-                # options.fetch(name, klass.send(key) || klass.send(:_resource))
                 klass.send(key) || klass.send(:_resource)
               else
                 klass.send(key)

@@ -13,11 +13,13 @@ module SaboTabby
     param :parent
     param :parent_mapper, default: proc { parent.mapper }
     param :options, default: proc { parent.options }
+    param :scope_relationships, default: proc { {} }
 
     def call(scope)
-      build(parent_mapper.relationships.one, :one, scope)
-        .then { |one| one.merge!(build(parent_mapper.relationships.many, :many, scope)) }
-        .then { |r| r.empty? ? {} : {relationships: r} }
+      scope_relationships[scope.hash] ||=
+        build(parent_mapper.relationships.one, :one, scope)
+          .then { |one| one.merge!(build(parent_mapper.relationships.many, :many, scope)) }
+          .then { |r| r.empty? ? {} : {relationships: r} }
     end
 
     def with(parent)
@@ -29,10 +31,10 @@ module SaboTabby
     def build(relationships, type, scope)
       relationships.each_with_object({}) do |(name, opts), result|
         rel_scope = relationship_scope(scope, opts[:method])
+        rel_name = opts.fetch(:as, opts[:method])
         next if skip?(rel_scope)
 
-        result[opts.fetch(:as, opts[:method])] =
-          send(type, opts.fetch(:as, name).to_s, rel_scope, **opts)
+        result[rel_name] = send(type, opts.fetch(:as, name).to_s, rel_scope, **opts)
       end
     end
 
@@ -57,15 +59,11 @@ module SaboTabby
           id: scope.send(mapper.resource_identifier).to_s
         }
       }
-    rescue => e
-      byebug
     end
 
     def many(name, scope, **opts)
       mapper_key = inflector.singularize(name)
       {data: scope.map { |s| one(mapper_key, s, **opts)[:data] }}
-    rescue => e
-      byebug
     end
 
     def inflector
@@ -78,6 +76,17 @@ module SaboTabby
           scope.send("#{method}_id")
         end
       end
+    end
+
+    def skeleton_for(relationship_type)
+      parent_mapper
+        .relationships
+        .send(relationship_type)
+        .each_with_object({}) do |(name, opts), result|
+          type = opts.fetch(:type, parent.mappers[opts.fetch(:as, name).to_s].type).to_s
+          rel_obj = {id: opts[:method], type: type}
+          result[opts.fetch(:as, opts[:method]).to_s] = rel_obj
+        end
     end
   end
 end

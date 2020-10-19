@@ -20,19 +20,14 @@ module SaboTabby
     param :resource
     param :options, default: proc { _options }
     param :loader, default: proc { Mapper::Loader.new(resource, name, **options) }
-    param :mappers, default: proc { loader.init_mappers }
+    param :mappers, default: proc { loader.init_mappers(compound: true) }
 
     def_delegator :mapper_resource, :document
 
     def call
       return error_document if error?
 
-      # p "*********************************"
-      # p Benchmark.bm { |x|
-      #   x.report("resource document") { @hmm = resource_document }
-      # }
       resource_document
-      #@hmm
     end
 
     def name
@@ -78,10 +73,6 @@ module SaboTabby
     end
 
     def resource_document
-      # p Benchmark.bm { |x|
-      #   x.report("resource") {  @dataa = collection? ? resource.map { |r| document(r) } : document(resource) }
-      #   x.report("compound") {  compound_document }
-      # }
       data = collection? ? resource.map { |r| document(r) } : document(resource)
       {data: data}.merge!(compound_document, paginate(meta))
     end

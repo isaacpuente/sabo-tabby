@@ -6,6 +6,21 @@ require "sabo_tabby/mapper"
 RSpec.describe SaboTabby::Mapper do
   include_context "test_data"
 
+  describe ".inherited" do
+    class LittleHooman < HoomanMapper
+      include SaboTabby::Mapper
+      resource :little_hooman
+    end
+    let(:mapper) { LittleHooman.new }
+
+    it "initializes superclass settings first" do
+      expect(mapper.type).to eq(:people)
+    end
+    it "adds specialized settings" do
+      expect(mapper.name).to eq(:little_hooman)
+    end
+  end
+
   describe ".resource" do
     let(:nested_attribute_methods) { %i(relationships) }
     let(:aliased_methods) { {attribute: :dynamic_attributes} }

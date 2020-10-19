@@ -164,7 +164,7 @@ RSpec.shared_context "test_data" do
       dynamic_attributes: dynamic_attributes,
       relationships: cat_mapper_relationships,
       compound_relationships: {},
-      resource: instance_double("SaboTabby::Resource")
+      resource: instance_double("SaboTabby::Resource", document_id: "cat_1")
     )
   }
   let(:hooman_mapper) {
@@ -177,7 +177,7 @@ RSpec.shared_context "test_data" do
       meta: {},
       relationships: hooman_mapper_relationships,
       compound_relationships: {},
-      resource: instance_double("SaboTabby::Resource")
+      resource: instance_double("SaboTabby::Resource", document_id: "people_1")
     )
   }
   let(:nap_spot_mapper) {
@@ -190,7 +190,7 @@ RSpec.shared_context "test_data" do
       resource_identifier: :spot_id,
       relationships: nap_spot_mapper_relationships,
       compound_relationships: {},
-      resource: instance_double("SaboTabby::Resource")
+      resource: instance_double("SaboTabby::Resource", document_id: "nap_spot_1")
     )
   }
   let(:sand_box_mapper) {
@@ -201,7 +201,7 @@ RSpec.shared_context "test_data" do
       attributes: [],
       meta: {},
       resource_identifier: :id,
-      resource: instance_double("SaboTabby::Resource"),
+      resource: instance_double("SaboTabby::Resource", document_id: "sand_box_1"),
       compound_relationships: {},
       relationships: sand_box_mapper_relationships
     )

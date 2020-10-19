@@ -30,9 +30,6 @@ module SaboTabby
         @compound_paths ||= if options.fetch(:include, false)
                               options[:include] == :none ? [] : options[:include]
                             else
-                              # p Benchmark.bm { |x|
-                              #   x.report("compound_paths") {_compound_paths(compound_resources(resource, resource_mapper)) }
-                              # }
                               compound_resources(resource, resource_mapper)
                                 .then { |c_resources| _compound_paths(c_resources) }
                             end
@@ -82,8 +79,6 @@ module SaboTabby
 
       def compound_resources(resource, resource_mapper, included_keys = [resource_mapper.name])
         resource_mapper.compound_relationships.each_with_object({}) do |(name, opts), result|
-          # byebug if name == :asset_detail
-          # next if included_keys.include?(name)
           next unless message?(resource, opts[:method])
 
           included_keys.push(name)
@@ -91,8 +86,6 @@ module SaboTabby
 
           result[name] = (mappers[name.to_s] ||= container["mappers.#{name}"])
             .compound_relationships.each_with_object({}) do |(c_name, c_opts), c_result|
-              # byebug if c_name == :asset_detail
-              # next if included_keys.include?(c_name)
               next unless message?(n_resource, c_opts[:method])
 
               c_result[c_name] = compound_resources(
@@ -102,8 +95,6 @@ module SaboTabby
               )
             end
         end
-      rescue => e
-        byebug
       end
 
       def _compound_paths(c_resources)
@@ -128,8 +119,6 @@ module SaboTabby
         Array(resource)
           .find { |r| r.respond_to?(message) }
           &.send(message)
-      rescue => e
-        byebug
       end
 
       def message?(resource, message)

@@ -16,8 +16,6 @@ module SaboTabby
     param :mapper
     param :options, default: proc { EMPTY_HASH }
     param :mappers, default: proc { {name.to_s => mapper} }
-    param :resource_document, default: proc { {} }
-    param :resource_relationships, default: proc { {} }
     param :relationship, default: proc { SaboTabby::Relationship.new(self) }
 
     def id(scope)
@@ -28,6 +26,8 @@ module SaboTabby
     end
 
     def attributes(scope)
+      return {} unless attributes?
+
       attributes = mapper
         .attributes
         .each_with_object({}) do |attribute, result|
@@ -35,10 +35,12 @@ module SaboTabby
 
           result[attribute] = scope.send(attribute)
         end
-      dynamic_attributes? ? attributes.merge!(dynamic_attributes(scope)) : attributes
+      {attributes: attributes.merge!(dynamic_attributes(scope))}
     end
 
     def dynamic_attributes(scope)
+      return {} unless dynamic_attributes?
+
       mapper
         .dynamic_attributes
         .each_with_object({}) do |(*attributes, block), result|
@@ -50,12 +52,8 @@ module SaboTabby
     end
 
     def document(scope)
-      #resource_document[document_id(scope)] ||=
-      resource_document[scope.hash] ||=
-        identifier(scope)
-          .then { |doc| attributes? ? doc.merge!(attributes: attributes(scope)) : doc }
-          .then { |doc| meta? ? doc.merge!(meta(scope)) : doc }
-          .then { |doc| relationships? ? doc.merge!(relationships(scope)) : doc }
+      identifier(scope)
+        .then { |doc| doc.merge!(attributes(scope), meta(scope), relationships(scope)) }
     end
 
     def identifier(scope)
@@ -63,16 +61,14 @@ module SaboTabby
     end
 
     def relationships(scope)
-      # p "*********************************"
-      # p Benchmark.bm { |x|
-      #   x.report("relationships") { relationship.call(scope) }
-      # }
+      return {} unless relationships?
 
-      #resource_relationships[document_id(scope)] ||= relationship.call(scope)
-      resource_relationships[scope.hash] ||= relationship.call(scope)
+      relationship.call(scope)
     end
 
     def meta(_scope = nil)
+      return {} unless meta?
+
       {meta: mapper.meta}
     end
 

@@ -60,11 +60,37 @@ RSpec.describe SaboTabby::Resource do
           }
         )
     end
+    context "sparse fieldset" do
+      let(:options) { {fields: {"cat" => %w(name age)}} }
+      it "returns filtered attributes hash" do
+        expect(resource.attributes(the_cat))
+          .to eq(attributes: {name: the_cat.name, age: the_cat.age})
+      end
+      context "no attributes" do
+        let(:options) { {fields: {"cat" => []}} }
+        it "returns empty attributes hash" do
+          expect(resource.attributes(the_cat)).to eq(attributes: {})
+        end
+      end
+    end
   end
 
   describe "#dynamic_attributes" do
     it "returns defined resource dynamic attributes hash" do
       expect(resource.dynamic_attributes(the_cat)).to eq(gender: "Ms. Le prr")
+    end
+    context "sparse fieldset" do
+      let(:options) { {fields: {"cat" => %w(gender)}} }
+      it "returns filtered attributes hash" do
+        expect(resource.dynamic_attributes(the_cat))
+          .to eq(gender: "Ms. Le prr")
+      end
+      context "no attributes" do
+        let(:options) { {fields: {"cat" => []}} }
+        it "returns empty attributes hash" do
+          expect(resource.dynamic_attributes(the_cat)).to eq({})
+        end
+      end
     end
   end
 

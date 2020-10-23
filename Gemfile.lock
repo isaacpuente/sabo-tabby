@@ -5,6 +5,7 @@ PATH
       concurrent-ruby (~> 1.0)
       dry-initializer
       dry-system
+      dry-validation
       oj
       simdjson
       yajl-ruby

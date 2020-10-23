@@ -11,16 +11,25 @@ require "yajl"
 require "simdjson"
 require "concurrent"
 require "sabo_tabby/document"
+require "sabo_tabby/options_contract"
 
 module SaboTabby
   class Serialize
+    class OptionsError < StandardError; end
+
     extend Forwardable
     extend Dry::Initializer
     include Dry::Core::Constants
 
     param :resource
     param :options, default: proc { EMPTY_HASH }
-    param :document, default: proc { Document.new(resource, options) }
+    param :validated_options, default: proc {
+      validation = OptionsContract.new.(options)
+      raise OptionsError, validation.errors.to_h if validation.failure?
+
+      validation.to_h
+    }
+    param :document, default: proc { Document.new(resource, validated_options) }
 
     def as_json
       # JSON.dump(as_hash)

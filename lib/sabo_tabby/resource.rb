@@ -28,8 +28,7 @@ module SaboTabby
     def attributes(scope)
       return {} unless attributes?
 
-      attributes = mapper
-        .attributes
+      attributes = filter(mapper.attributes)
         .each_with_object({}) do |attribute, result|
           next unless scope.respond_to?(attribute)
 
@@ -41,8 +40,7 @@ module SaboTabby
     def dynamic_attributes(scope)
       return {} unless dynamic_attributes?
 
-      mapper
-        .dynamic_attributes
+      filter(mapper.dynamic_attributes, dynamic: true)
         .each_with_object({}) do |(*attributes, block), result|
           attributes.each do |attr|
             value = scope.respond_to?(attr) ? scope.send(attr) : nil
@@ -90,6 +88,17 @@ module SaboTabby
 
     def document_id(scope)
       "#{type}_#{id(scope)}"
+    end
+
+    private
+
+    def filter(attributes, dynamic: false)
+      fieldset = options.fetch(:fields, {})[type.to_s]
+      return attributes if fieldset.nil?
+      return {} if fieldset.empty?
+      return attributes.select { |a| fieldset.include?(a.to_s) } unless dynamic
+
+      attributes.select { |(name, _block)| fieldset.include?(name.to_s) }
     end
   end
 end

@@ -30,6 +30,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency "concurrent-ruby", "~> 1.0"
   spec.add_runtime_dependency "dry-initializer"
   spec.add_runtime_dependency "dry-system"
+  spec.add_runtime_dependency "dry-validation"
   spec.add_runtime_dependency "oj"
   spec.add_runtime_dependency "simdjson"
   spec.add_runtime_dependency "yajl-ruby"

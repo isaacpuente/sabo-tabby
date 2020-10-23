@@ -96,12 +96,35 @@ RSpec.describe SaboTabby::Document do
             }
           )
         end
+        context "sparse fieldset" do
+          let(:options) { {fields: {"cat" => %w(name age)}} }
+          let(:resource) { the_cat }
+          it "returns resource document with only requested fieldset" do
+            expect(JSON.generate(document.call)).to match_json_schema(:jsonapi)
+            expect(document.call).to eq(
+              data: single_document_response[:data].merge(
+                attributes: {age: Array(resource)[0].age, name: Array(resource)[0].name}
+              )
+            )
+          end
+        end
       end
       context "resource collection with relationships" do
         let(:resource) { [the_cat, new_cat] }
         it "returns resource document collection" do
           expect(JSON.generate(document.call)).to match_json_schema(:jsonapi)
           expect(document.call).to eq(document_collection_response)
+        end
+        context "sparse fieldset" do
+          let(:options) { {fields: {"cat" => %w(name age)}} }
+          it "returns resource document with only requested fieldset" do
+            expect(JSON.generate(document.call)).to match_json_schema(:jsonapi)
+            expect(document.call).to eq(
+              data: document_collection_response[:data].map.with_index { |d, i|
+                d.merge(attributes: {age: Array(resource)[i].age, name: Array(resource)[i].name})
+              }
+            )
+          end
         end
       end
       context "compound document" do
@@ -113,6 +136,23 @@ RSpec.describe SaboTabby::Document do
               data: single_document_response[:data],
               included: compound_response
             )
+          end
+          context "sparse fieldset" do
+            let(:options) {
+              {include: %i(hooman nap_spots sand_box), fields: {"people" => %w(none)}}
+            }
+            it "returns resource compound document with filtered attributes" do
+              expect(JSON.generate(document.call)).to match_json_schema(:jsonapi)
+              expect(document.call).to eq(
+                data: single_document_response[:data],
+                included: [
+                  compound_response[0].merge(attributes: {}),
+                  compound_response[1],
+                  compound_response[2],
+                  compound_response[3]
+                ]
+              )
+            end
           end
         end
         context "single resource with relationships and nested included" do

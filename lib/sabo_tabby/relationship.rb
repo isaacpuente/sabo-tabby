@@ -77,16 +77,5 @@ module SaboTabby
         end
       end
     end
-
-    def skeleton_for(relationship_type)
-      parent_mapper
-        .relationships
-        .send(relationship_type)
-        .each_with_object({}) do |(name, opts), result|
-          type = opts.fetch(:type, parent.mappers[opts.fetch(:as, name).to_s].type).to_s
-          rel_obj = {id: opts[:method], type: type}
-          result[opts.fetch(:as, opts[:method]).to_s] = rel_obj
-        end
-    end
   end
 end

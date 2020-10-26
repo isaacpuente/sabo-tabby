@@ -1,4 +1,5 @@
 ---
+require: rubocop-performance
 AllCops:
   DisplayCopNames:    true
   DisplayStyleGuide:  true

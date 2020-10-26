@@ -28,7 +28,7 @@ module SaboTabby
 
       def compound_paths
         @compound_paths ||= if options.fetch(:include, false)
-                              options[:include] == "none" ? [] : options[:include]
+                              options[:include] == %w(none) ? [] : options[:include]
                             else
                               compound_resources(resource, resource_mapper)
                                 .then { |c_resources| _compound_paths(c_resources) }

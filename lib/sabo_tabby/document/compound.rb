@@ -76,7 +76,6 @@ module SaboTabby
         document_id = resource.document_id(scope)
         return [] if included_documents[document_id] || scope.nil?
 
-
         Array(scope)
           .map { |sc| resource.document(sc) }
           .tap { included_documents[document_id] = true }

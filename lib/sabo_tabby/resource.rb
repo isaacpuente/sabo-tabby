@@ -61,7 +61,10 @@ module SaboTabby
     def relationships(scope)
       return {} unless relationships?
 
-      relationship.call(scope)
+      result = relationship.call(scope)
+      return {} if result.empty?
+
+      {relationships: result}
     end
 
     def meta(_scope = nil)
@@ -71,7 +74,7 @@ module SaboTabby
     end
 
     def relationships?
-      mapper.relationships.one.any? || mapper.relationships.many.any?
+      mapper.relationships.any?
     end
 
     def attributes?

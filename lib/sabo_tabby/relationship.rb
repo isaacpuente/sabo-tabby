@@ -16,10 +16,7 @@ module SaboTabby
     param :scope_relationships, default: proc { {} }
 
     def call(scope)
-      scope_relationships[scope.hash] ||=
-        build(parent_mapper.relationships.one, :one, scope)
-          .then { |one| one.merge!(build(parent_mapper.relationships.many, :many, scope)) }
-          .then { |r| r.empty? ? {} : {relationships: r} }
+      scope_relationships[scope.hash] ||= build(parent_mapper.relationships, scope)
     end
 
     def with(parent)
@@ -28,13 +25,15 @@ module SaboTabby
 
     private
 
-    def build(relationships, type, scope)
+    def build(relationships, scope)
       relationships.each_with_object({}) do |(name, opts), result|
         rel_scope = relationship_scope(scope, opts[:method])
         rel_name = opts.fetch(:as, opts[:method])
         next if skip?(rel_scope)
 
-        result[rel_name] = send(type, opts.fetch(:as, name).to_s, rel_scope, **opts)
+        result[rel_name] = {
+          data: send(opts[:cardinality], opts.fetch(:as, name).to_s, rel_scope, **opts)
+        }
       end
     end
 
@@ -52,18 +51,12 @@ module SaboTabby
 
     def one(name, scope, **opts)
       mapper = parent.mappers[name]
-      type = opts.fetch(:type, mapper.type).to_s
-      {
-        data: {
-          type: type,
-          id: scope.send(mapper.resource_identifier).to_s
-        }
-      }
+      {type: opts.fetch(:type, mapper.type).to_s, id: scope.send(mapper.resource_identifier).to_s}
     end
 
     def many(name, scope, **opts)
       mapper_key = inflector.singularize(name)
-      {data: scope.map { |s| one(mapper_key, s, **opts)[:data] }}
+      scope.map { |s| one(mapper_key, s, **opts) }
     end
 
     def inflector

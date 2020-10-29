@@ -44,8 +44,7 @@ module SaboTabby
       end
 
       def compound_relationships(mapper = self)
-        mapper.relationships.one
-          .merge(mapper.relationships.many)
+        mapper.relationships
           .select { |_rel_name, rel_opts| rel_opts.fetch(:include, false) }
       end
 
@@ -58,10 +57,6 @@ module SaboTabby
 
     module ClassMethods
       include Helpers
-
-      def inherited(base)
-        super
-      end
 
       def resource(name = Undefined)
         _setting(:resource, name).tap do
@@ -104,8 +99,11 @@ module SaboTabby
 
       alias_method :dynamic_attributes, :attribute
 
-      def relationships(one: {}, many: {}, &block)
-        _nested_setting(:relationships, one: one, many: many, &block)
+      def relationships(**params, &block)
+        return block.call if block
+        return _setting(:relationships, params, {}) unless cumulative_setting?(:_relationships, params)
+
+        _setting(:relationships, config.send(:_relationships).merge(params), {})
       end
 
       def meta(**values)
@@ -114,12 +112,12 @@ module SaboTabby
 
       def one(name, **opts)
         key = inflector.singularize(opts.fetch(:as, name)).to_sym
-        _relationships.one[key] = opts.merge(method: name)
+        relationships(**{key => opts.merge(method: name, cardinality: :one)})
       end
 
       def many(name, **opts)
         key = inflector.singularize(opts.fetch(:as, name)).to_sym
-        _relationships.many[key] = opts.merge(method: name)
+        relationships(**{key => opts.merge(method: name, cardinality: :many)})
       end
 
       private

@@ -207,23 +207,19 @@ RSpec.shared_context "test_data" do
     )
   }
   let(:cat_mapper_relationships) {
-    double(
-      "Dry::Configurable::Config",
-      one: {hooman: {method: :hooman}, sand_box: {method: :sand_box}},
-      many: {nap_spot: {method: :nap_spots}}
-    )
+    {
+      hooman: {method: :hooman, cardinality: :one},
+      sand_box: {method: :sand_box, cardinality: :one},
+      nap_spot: {method: :nap_spots, cardinality: :many}
+    }
   }
   let(:hooman_mapper_relationships) {
-    double(
-      "Dry::Configurable::Config",
-      one: {},
-      many: {baby: {as: :cats, method: :babies, type: :cat}}
-    )
+    {baby: {as: :cats, method: :babies, cardinality: :one, type: :cat}}
   }
   let(:nap_spot_mapper_relationships) {
-    double("Dry::Configurable::Config", one: {cat: {method: :cat}}, many: {})
+    {cat: {method: :cat, cardinality: :one}}
   }
-  let(:sand_box_mapper_relationships) { double("Dry::Configurable::Config", one: {}, many: {}) }
+  let(:sand_box_mapper_relationships) { {} }
   let(:relationship_result) {
     {
       relationships: {

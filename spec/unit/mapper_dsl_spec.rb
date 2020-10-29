@@ -29,7 +29,7 @@ RSpec.describe SaboTabby::Mapper do
         type: nil,
         attributes: [],
         attribute: [],
-        relationships: {many: {}, one: {}},
+        relationships: {},
         meta: {}
       }
     }
@@ -80,8 +80,9 @@ RSpec.describe SaboTabby::Mapper do
           attributes: %i(name age family),
           attribute: [[:gender, -> {}]],
           relationships: {
-            many: {nap_spot: {method: :nap_spots}},
-            one: {hooman: {method: :hooman, type: :people}, sand_box: {method: :sand_box}}
+            nap_spot: {method: :nap_spots, cardinality: :many},
+            hooman: {method: :hooman, type: :people, cardinality: :one},
+            sand_box: {method: :sand_box, cardinality: :one}
           },
           meta: {code_name: :feline}
         }
@@ -92,11 +93,6 @@ RSpec.describe SaboTabby::Mapper do
           when :type, :attributes, :meta
             expect(mapper.config).to respond_to("_#{method}")
             expect(mapper.config.send("_#{method}")).to eq(value)
-          when :relationships
-            value.each do |m, def_val|
-              expect(mapper.config.send("_#{method}")).to respond_to(m)
-              expect(mapper.config.send("_#{method}").send(m)).to eq(def_val)
-            end
           when :attribute
             expect(mapper.config).to respond_to(:_dynamic_attributes)
             expect(mapper.config.send(:_dynamic_attributes)[0].first).to eq(:gender)
@@ -205,8 +201,7 @@ RSpec.describe SaboTabby::Mapper do
     describe ".relationships" do
       let(:mapper) { SandBoxMapper }
       it "is defined when resource is defined" do
-        expect(mapper.relationships.one).to eq({})
-        expect(mapper.relationships.many).to eq({})
+        expect(mapper.relationships).to eq({})
       end
     end
 
@@ -215,9 +210,10 @@ RSpec.describe SaboTabby::Mapper do
         let(:mapper) { CatMapper }
 
         it "sets singularized method name as key and original as method option" do
-          expect(mapper.relationships.one).to eq(
-            hooman: {method: :hooman, type: :people},
-            sand_box: {method: :sand_box}
+          expect(mapper.relationships).to eq(
+            hooman: {method: :hooman, cardinality: :one, type: :people},
+            sand_box: {method: :sand_box, cardinality: :one},
+            nap_spot: {method: :nap_spots, cardinality: :many}
           )
         end
       end
@@ -225,26 +221,21 @@ RSpec.describe SaboTabby::Mapper do
         let(:mapper) { NapSpotMapper }
         context "as option" do
           it "sets singularized as option value as key and original as 'as' option" do
-            expect(mapper.relationships.one).to eq(cat: {method: :cat})
+            expect(mapper.relationships).to eq(cat: {method: :cat, cardinality: :one})
           end
         end
       end
     end
 
     describe ".many" do
-      context "without options" do
-        let(:mapper) { CatMapper }
-
-        it "sets singularized method name as key and original as method option" do
-          expect(mapper.relationships.many).to eq(nap_spot: {method: :nap_spots})
-        end
-      end
       context "with options" do
         let(:mapper) { HoomanMapper }
         context "as option" do
           it "sets singularized as option value as key and original as 'as' option" do
-            expect(mapper.relationships.many)
-              .to eq(cat: {as: :cats, method: :babies, type: :cat}, nap_spot: {method: :nap_spots})
+            expect(mapper.relationships).to eq(
+              cat: {as: :cats, method: :babies, cardinality: :many, type: :cat},
+              nap_spot: {method: :nap_spots, cardinality: :many}
+            )
           end
         end
       end

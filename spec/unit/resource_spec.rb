@@ -12,7 +12,8 @@ RSpec.describe SaboTabby::Resource do
       "SaboTabby::Relationship",
       class_double("SaboTabby::Relationship", new: relationship)
     )
-    allow(relationship).to receive(:call).with(the_cat).and_return(relationship_result)
+    allow(relationship)
+      .to receive(:call).with(the_cat).and_return(relationship_result[:relationships])
   end
 
   describe "#initialize" do

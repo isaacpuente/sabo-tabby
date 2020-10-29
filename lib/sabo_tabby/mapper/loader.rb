@@ -42,10 +42,7 @@ module SaboTabby
       end
 
       def relationship_mappers(mapper = resource_mapper)
-        mapper
-          .relationships
-          .one
-          .merge(mapper.relationships.many)
+        mapper.relationships
           .each_with_object(mappers) do |(name, opts), mprs|
             rel_name = inflector.singularize(opts.fetch(:as, name))
             mprs[rel_name] ||= container["mappers.#{rel_name}"]
@@ -117,8 +114,10 @@ module SaboTabby
         return nil if message.nil?
 
         Array(resource)
-          .find { |r| r.respond_to?(message) }
-          &.send(message)
+          .find { |r|
+            r.respond_to?(message) &&
+              (r.send(message).is_a?(Array) ? r.send(message).any? : true)
+          }&.send(message)
       end
 
       def message?(resource, message)

@@ -84,9 +84,7 @@ module SaboTabby
       def relationship_opts(name, scope_name)
         (mappers[scope_name] || mappers[name])
           .relationships
-          .then do |mapper_rels|
-            mapper_rels.one.merge(mapper_rels.many).fetch(inflector.singularize(name).to_sym, {})
-          end
+          .fetch(inflector.singularize(name).to_sym, {})
       end
 
       def resource(scope, name)

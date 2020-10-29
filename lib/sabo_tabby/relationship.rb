@@ -16,6 +16,8 @@ module SaboTabby
     param :scope_relationships, default: proc { {} }
 
     def call(scope)
+      return {} unless relationships?
+
       scope_relationships[scope.hash] ||= build(parent_mapper.relationships, scope)
     end
 
@@ -43,6 +45,10 @@ module SaboTabby
       elsif scope.respond_to?("#{method}_id") && !skip?(scope.send("#{method}_id"))
         id_object(scope, method).new
       end
+    end
+
+    def relationships?
+      parent_mapper.relationships.any?
     end
 
     def skip?(scope)

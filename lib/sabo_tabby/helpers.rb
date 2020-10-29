@@ -4,7 +4,7 @@ module SaboTabby
   module Helpers
     def resource_name(scope, exclude_word = "Mapper")
       Array(scope).last
-        .then { |scp| scp.class == Class ? scp.name : scp.class.name }
+        .then { |scp| scp.instance_of?(Class) ? scp.name : scp.class.name }
         .then do |klass_name|
           klass_name
             .split("::")

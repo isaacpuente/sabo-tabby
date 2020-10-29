@@ -100,10 +100,13 @@ module SaboTabby
       alias_method :dynamic_attributes, :attribute
 
       def relationships(**params, &block)
-        return block.call if block
-        return _setting(:relationships, params, {}) unless cumulative_setting?(:_relationships, params)
+        return yield if block
 
-        _setting(:relationships, config.send(:_relationships).merge(params), {})
+        if cumulative_setting?(:_relationships, params)
+          _setting(:relationships, config.send(:_relationships).merge(params), {})
+        else
+          _setting(:relationships, params, {})
+        end
       end
 
       def meta(**values)

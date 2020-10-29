@@ -146,7 +146,7 @@ RSpec.describe SaboTabby::Document do
               expect(document.call).to eq(
                 data: single_document_response[:data],
                 included: [
-                  compound_response[0].merge(attributes: {}),
+                  compound_response[0].reject { |k, _| k == :attributes },
                   compound_response[1],
                   compound_response[2],
                   compound_response[3]

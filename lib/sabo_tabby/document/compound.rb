@@ -45,33 +45,35 @@ module SaboTabby
             name.to_s.split(".").inject(scp) do |compound_scp, rel_name|
               next compound_scp if rel_name == resource_name(scope)
 
-              Array(compound_scp).flat_map do |iscope|
-                scope_name = scope_name(iscope, parent_name).to_s
-                rel_opts = relationship_opts(rel_name, scope_name)
-                compound_scope(iscope, rel_name, **rel_opts) do |cscope|
-                  doc.concat(
-                    cscope.flat_map { |sc| resource_document(sc, rel_name, **rel_opts) }
-                  )
-                end
-              end.tap { parent_name = rel_name }
+              compound_scope(compound_scp, rel_name, parent_name) do |cscope|
+                doc.concat(cscope.flat_map { |csco| resource_document(csco, rel_name) })
+                parent_name = rel_name
+              end
             end
           end
         end
       end
 
-      def compound_scope(scope, name, **opts)
+      def compound_scope(scope, name, parent_name)
+        Array(scope).flat_map do |sco|
+          rel_opts = relationship_opts(name, scope_name(sco, parent_name).to_s)
+          relationship_scope(sco, name, **rel_opts).tap do |relationship_scope|
+            yield Array(relationship_scope) if block_given?
+          end
+        end
+      end
+
+      def relationship_scope(scope, name, **opts)
         return if scope.nil?
 
         if opts.any? && scope.respond_to?(opts[:method])
           scope.send(opts[:method])
         elsif scope.respond_to?(name)
           scope.send(name)
-        end.tap do |cscope|
-          yield Array(cscope) if block_given?
         end
       end
 
-      def resource_document(scope, name, **opts)
+      def resource_document(scope, name)
         resource = resource(scope, name)
         document_id = resource.document_id(scope)
         return [] if included_documents[document_id] || scope.nil?

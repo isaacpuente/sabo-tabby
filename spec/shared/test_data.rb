@@ -164,7 +164,11 @@ RSpec.shared_context "test_data" do
       dynamic_attributes: dynamic_attributes,
       relationships: cat_mapper_relationships,
       compound_relationships: {},
-      resource: instance_double("SaboTabby::Resource", document_id: "cat_1")
+      resource: instance_double(
+        "SaboTabby::Resource",
+        document_id: "cat_1",
+        type: "cat"
+      )
     )
   }
   let(:hooman_mapper) {
@@ -177,7 +181,11 @@ RSpec.shared_context "test_data" do
       meta: {},
       relationships: hooman_mapper_relationships,
       compound_relationships: {},
-      resource: instance_double("SaboTabby::Resource", document_id: "people_1")
+      resource: instance_double(
+        "SaboTabby::Resource",
+        document_id: "people_1",
+        type: "people"
+      )
     )
   }
   let(:nap_spot_mapper) {
@@ -190,7 +198,11 @@ RSpec.shared_context "test_data" do
       resource_identifier: :spot_id,
       relationships: nap_spot_mapper_relationships,
       compound_relationships: {},
-      resource: instance_double("SaboTabby::Resource", document_id: "nap_spot_1")
+      resource: instance_double(
+        "SaboTabby::Resource",
+        document_id: "nap_spot_1",
+        type: "nap_spot"
+      )
     )
   }
   let(:sand_box_mapper) {
@@ -201,7 +213,11 @@ RSpec.shared_context "test_data" do
       attributes: [],
       meta: {},
       resource_identifier: :id,
-      resource: instance_double("SaboTabby::Resource", document_id: "sand_box_1"),
+      resource: instance_double(
+        "SaboTabby::Resource",
+        document_id: "sand_box_1",
+        type: "sand_box"
+      ),
       compound_relationships: {},
       relationships: sand_box_mapper_relationships
     )
@@ -220,6 +236,7 @@ RSpec.shared_context "test_data" do
     {cat: {method: :cat, cardinality: :one}}
   }
   let(:sand_box_mapper_relationships) { {} }
+  let(:attribute_result) { {age: 9, family: "Domestic", gender: "Ms. Le prr", name: "Nibbler"} }
   let(:relationship_result) {
     {
       relationships: {
@@ -229,7 +246,8 @@ RSpec.shared_context "test_data" do
       }
     }
   }
-  let(:relationship) { instance_double("SaboTabby::Relationships") }
+  let(:relationship) { instance_double("SaboTabby::Relationship") }
+  let(:attribute) { instance_double("SaboTabby::Attribute") }
   let(:dynamic_attributes) {
     [[:gender, proc { |value| value == :f ? "Ms. Le prr" : "Mr. Le prr" }]]
   }

@@ -27,12 +27,13 @@ module SaboTabby
       end
 
       def compound_paths
-        @compound_paths ||= if options.fetch(:include, false)
-                              options[:include] == %w(none) ? [] : options[:include]
-                            else
-                              compound_resources(resource, resource_mapper)
-                                .then { |c_resources| _compound_paths(c_resources) }
-                            end
+        @compound_paths ||=
+          if options.fetch(:include, false)
+            options[:include] == %w(none) ? [] : options[:include]
+          else
+            compound_resources(resource, resource_mapper)
+              .then { |c_resources| _compound_paths(c_resources) }
+          end
       end
 
       def mapper
@@ -74,23 +75,14 @@ module SaboTabby
 
       private
 
-      def compound_resources(resource, resource_mapper, included_keys = [resource_mapper.name])
+      def compound_resources(resource, resource_mapper)
         resource_mapper.compound_relationships.each_with_object({}) do |(name, opts), result|
           next unless message?(resource, opts[:method])
 
-          included_keys.push(name)
-          n_resource = message(resource, opts[:method])
-
-          result[name] = (mappers[name.to_s] ||= container["mappers.#{name}"])
-            .compound_relationships.each_with_object({}) do |(c_name, c_opts), c_result|
-              next unless message?(n_resource, c_opts[:method])
-
-              c_result[c_name] = compound_resources(
-                message(n_resource, c_opts[:method]),
-                mappers[c_name.to_s] ||= container["mappers.#{c_name}"],
-                included_keys << c_name
-              )
-            end
+          result[name] = compound_resources(
+            message(resource, opts[:method]),
+            mappers[name.to_s] ||= container["mappers.#{name}"]
+          )
         end
       end
 
@@ -99,14 +91,8 @@ module SaboTabby
           .each_with_object([]) do |(name, relationships), result|
             next result << name.to_s if relationships.empty?
 
-            result.concat(
-              relationships.each_with_object([]) do |(rel_name, rels), sub_result|
-                next sub_result << "#{name}.#{rel_name}" if rels.empty?
-
-                Array(_compound_paths(rels))
-                  .then { |path| path.map { |p| sub_result << "#{name}.#{rel_name}.#{p}" } }
-              end
-            )
+            Array(_compound_paths(relationships))
+              .then { |path| path.map { |p| result << "#{name}.#{p}" } }
           end
       end
 

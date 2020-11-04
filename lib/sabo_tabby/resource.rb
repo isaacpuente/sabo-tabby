@@ -17,8 +17,8 @@ module SaboTabby
     param :mapper
     param :options, default: proc { EMPTY_HASH }
     param :mappers, default: proc { {name.to_s => mapper} }
-    param :attribute, default: proc { SaboTabby::Attribute.new(self) }
-    param :relationship, default: proc { SaboTabby::Relationship.new(self) }
+    param :attribute, default: proc { mapper.attribute }
+    param :relationship, default: proc { mapper.relationship }
 
     def id(scope)
       return scope if scope.is_a?(Integer)
@@ -38,13 +38,13 @@ module SaboTabby
 
     def attributes(scope)
       attribute
-        .call(scope)
+        .call(mapper, scope, **options)
         .then { |result| result.empty? ? {} : {attributes: result} }
     end
 
     def relationships(scope)
       relationship
-        .call(scope)
+        .call(mapper, scope, **mappers)
         .then { |result| result.empty? ? {} : {relationships: result} }
     end
 

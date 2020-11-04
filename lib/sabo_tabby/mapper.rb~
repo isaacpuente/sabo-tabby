@@ -40,15 +40,13 @@ module SaboTabby
         super()
       end
 
-      def resource(mappers: {}, **options)
-        return @resource if same_resource?(mappers, options)
-
-        @resource = SaboTabby::Resource.new(self, options, mappers)
-      end
-
       def compound_relationships(mapper = self)
         mapper.relationships
           .select { |_rel_name, rel_opts| rel_opts.fetch(:include, false) }
+      end
+
+      def resource
+        self.class.scope_resource
       end
 
       def attribute
@@ -57,12 +55,6 @@ module SaboTabby
 
       def relationship
         self.class.resource_relationship
-      end
-
-      private
-
-      def same_resource?(mappers, options)
-        @resource && @resource.mappers == mappers && @resource.options == options
       end
     end
 
@@ -132,6 +124,10 @@ module SaboTabby
       def many(name, **opts)
         key = inflector.singularize(opts.fetch(:as, name)).to_sym
         relationships(**{key => opts.merge(method: name, cardinality: :many)})
+      end
+
+      def scope_resource
+        @scope_resource ||= SaboTabby::Resource.new
       end
 
       def resource_relationship

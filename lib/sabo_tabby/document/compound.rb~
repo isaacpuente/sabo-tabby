@@ -18,12 +18,13 @@ module SaboTabby
       param :resources, default: proc { {} }
       param :mappers, default: proc { loader.mappers }
       param :compound_paths, default: proc { loader.compound_paths }
+      param :compound_documents, default: proc { {} }
 
       def call(scope)
         return {} if compound_paths.empty?
 
         compound_paths
-          .each_with_object([]) { |path, compound| compound.concat(document(scope, path)) }
+          .each_with_object([]) { |name, compound| compound.concat(document(scope, name)) }
           .then { |compound| compound.any? ? {included: compound} : {} }
       end
 
@@ -37,11 +38,11 @@ module SaboTabby
         end
       end
 
-      def document(scope, path)
+      def document(scope, name)
         [].tap do |doc|
           Array(scope).flat_map do |scp|
             parent_name = ""
-            path.to_s.split(".").inject(scp) do |compound_scp, rel_name|
+            name.to_s.split(".").inject(scp) do |compound_scp, rel_name|
               next compound_scp if rel_name == resource_name(scope)
 
               compound_scope(compound_scp, rel_name, parent_name) do |cscope|
@@ -73,12 +74,13 @@ module SaboTabby
       end
 
       def resource_document(scope, name)
-        resource = resource(scope_name(scope), name)
-        document_id = resource.document_id(scope)
+        mapper = mapper(scope_name(scope), name)
+        resource = mapper.resource
+        document_id = resource.document_id(mapper, scope)
         return [] if included_documents[document_id] || scope.nil?
 
         Array(scope)
-          .map { |sc| resource.document(sc) }
+          .map { |sc| resource.document(mapper, sc, mappers, **options) }
           .tap { included_documents[document_id] = true }
       end
 
@@ -89,7 +91,7 @@ module SaboTabby
       end
 
       def resource(scope_name, name)
-        mapper(scope_name, name).resource(mappers: mappers, **options)
+        mapper(scope_name, name).resource
       end
 
       def mapper(scope_name, name)

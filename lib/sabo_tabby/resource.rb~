@@ -1,0 +1,64 @@
+# frozen_string_literal: true
+
+# auto_register: false
+
+require "dry-initializer"
+require "forwardable"
+require "sabo_tabby/attribute"
+require "sabo_tabby/relationship"
+
+module SaboTabby
+  class Resource
+    extend Dry::Initializer
+
+    def id(mapper, scope)
+      return scope if scope.is_a?(Integer)
+      return "" unless scope.respond_to?(mapper.resource_identifier)
+
+      scope.send(mapper.resource_identifier)
+    end
+
+    def document(mapper, scope, mappers, **options)
+      identifier(mapper, scope)
+        .then do |doc|
+          doc.merge!(
+            attributes(mapper, scope, **options),
+            relationships(mapper, scope, **mappers),
+            meta(mapper, scope)
+          )
+        end
+    end
+
+    def identifier(mapper, scope)
+      {type: mapper.type.to_s, id: id(mapper, scope).to_s}
+    end
+
+    def attributes(mapper, scope, **options)
+      mapper
+        .attribute
+        .call(mapper, scope, **options)
+        .then { |result| result.empty? ? {} : {attributes: result} }
+    end
+
+    def relationships(mapper, scope, **mappers)
+      mapper
+        .relationship
+        .call(mapper, scope, **mappers)
+        .then { |result| result.empty? ? {} : {relationships: result} }
+    end
+
+    def meta(mapper, _scope = nil)
+      return {} unless meta?(mapper)
+
+      {meta: mapper.meta}
+    end
+
+    def meta?(mapper)
+      mapper.meta.any?
+    end
+
+    def document_id(mapper, scope)
+      "#{mapper.type}_#{id(mapper, scope)}"
+    end
+  end
+end

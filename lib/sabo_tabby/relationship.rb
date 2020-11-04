@@ -8,33 +8,29 @@ require "forwardable"
 module SaboTabby
   class Relationship
     extend Dry::Initializer
-    extend Forwardable
+    # extend Forwardable
 
-    param :parent
-    param :parent_mapper, default: proc { parent.mapper }
-    param :options, default: proc { parent.options }
-    param :scope_relationships, default: proc { {} }
+    # param :parent
+    # param :parent_mapper, default: proc { parent.mapper }
+    # param :options, default: proc { parent.options }
+    # param :scope_relationships, default: proc { {} }
 
-    def call(scope)
-      return {} unless relationships?
+    def call(mapper, scope, **mappers)
+      return {} unless relationships?(mapper)
 
-      scope_relationships[scope.hash] ||= build(parent_mapper.relationships, scope)
-    end
-
-    def with(parent)
-      self.class.new(parent)
+      build(mapper, scope, **mappers)
     end
 
     private
 
-    def build(relationships, scope)
-      relationships.each_with_object({}) do |(name, opts), result|
+    def build(mapper, scope, **mappers)
+      mapper.relationships.each_with_object({}) do |(name, opts), result|
         rel_scope = relationship_scope(scope, opts[:method])
         rel_name = opts.fetch(:as, opts[:method])
         next if skip?(rel_scope)
 
         result[rel_name] = {
-          data: send(opts[:cardinality], opts.fetch(:as, name).to_s, rel_scope, **opts)
+          data: send(opts[:cardinality], mappers, opts.fetch(:as, name).to_s, rel_scope, **opts)
         }
       end
     end
@@ -47,22 +43,22 @@ module SaboTabby
       end
     end
 
-    def relationships?
-      parent_mapper.relationships.any?
+    def relationships?(mapper)
+      mapper.relationships.any?
     end
 
     def skip?(scope)
       scope.nil? || (scope.is_a?(Array) && scope.empty?)
     end
 
-    def one(name, scope, **opts)
-      mapper = parent.mappers[name]
+    def one(mappers, name, scope, **opts)
+      mapper = mappers[name]
       {type: opts.fetch(:type, mapper.type).to_s, id: scope.send(mapper.resource_identifier).to_s}
     end
 
-    def many(name, scope, **opts)
+    def many(mappers, name, scope, **opts)
       mapper_key = inflector.singularize(name)
-      scope.map { |s| one(mapper_key, s, **opts) }
+      scope.map { |s| one(mappers, mapper_key, s, **opts) }
     end
 
     def inflector

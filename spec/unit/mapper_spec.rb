@@ -27,9 +27,9 @@ RSpec.describe SaboTabby::Mapper do
         case r
         when :name
           expect(mapper.send(r)).to eq(mapper.class.send(:resource))
-        when :resource
-          expect(mapper.send(r)).to eq(resource)
-        else
+         when :resource
+           next
+         else
           expect(mapper.send(r)).to eq(mapper.class.send(r))
         end
       end

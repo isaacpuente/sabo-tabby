@@ -31,16 +31,26 @@ module SaboTabby
     }
     param :document, default: proc { Document.new(resource, validated_options) }
 
-    def as_json
-      # JSON.dump(as_hash)
-      # as_hash.to_json
-      # @resource_json ||= Oj.dump(as_hash)
-      # Yajl::Encoder.encode(as_hash)
-      @resource_json ||= JSON.fast_generate(as_hash, create_additions: false, quirks_mode: true)
+    def as_json(type: :fast_generate)
+      case type
+      when :fast_generate
+        JSON.fast_generate(as_hash, create_additions: false, quirks_mode: true)
+      when :oj
+        Oj.dump(as_hash)
+      when :yajl
+        Yajl::Encoder.encode(as_hash)
+      when :simdjson
+        JSON.dump(as_hash)
+      when :to_json
+        as_hash.to_json
+      else
+        "wrong generator"
+      end
     end
 
     def as_hash
-      @resource_hash ||= document.call
+      # @resource_hash ||= document.call
+      document.call
     end
   end
 end

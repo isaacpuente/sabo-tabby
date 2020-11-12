@@ -13,7 +13,12 @@ RSpec.describe SaboTabby::Document do
   let(:options) { {} }
   let(:mappers) { loaded_mappers }
   let(:loader) {
-    instance_double("SaboTabby::Mapper::Loader", init_mappers: mappers, compound_paths: [])
+    instance_double(
+      "SaboTabby::Mapper::Loader",
+      mappers: mappers,
+      compound_paths: [],
+      scope_settings: {}
+    )
   }
   let(:pagination) {
     instance_double("SaboTabby::Pagination", meta: pagination_meta, links: pagination_links)

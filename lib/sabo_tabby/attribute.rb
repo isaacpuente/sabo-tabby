@@ -32,6 +32,8 @@ module SaboTabby
         .each_with_object({}) do |(*attributes, block), result|
           attributes.each do |attr|
             value = scope.respond_to?(attr) ? scope.send(attr) : nil
+            next if scope.is_a?(Numeric)
+
             result[attr] = block.(value, scope, **options)
           end
         end

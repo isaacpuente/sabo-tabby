@@ -79,8 +79,28 @@ module SaboTabby
         end
       end
 
-      def link(name = Undefined)
-        _setting(:link, name)
+      def links(**params, &block)
+        # links do
+        #   as_self ""
+        #   related do |resource, request|
+        #    
+        #   end
+        # end
+        return yield if block
+
+        if cumulative_setting?(:_links, params)
+          _setting(:links, config.send(:_links).merge(params), {})
+        else
+          _setting(:links, params, {})
+        end
+      end
+
+      def as_self(link = "", &block)
+        links(**{self: link, block: block})
+      end
+
+      def related(link = "", &block)
+        links(**{related: link, block: block})
       end
 
       def type(name = Undefined)
@@ -125,12 +145,12 @@ module SaboTabby
       end
 
       def one(name, **opts)
-        key = inflector.singularize(opts.fetch(:as, name)).to_sym
+        key = opts.fetch(:as, name).to_sym
         relationships(**{key => opts.merge(method: name, cardinality: :one)})
       end
 
       def many(name, **opts)
-        key = inflector.singularize(opts.fetch(:as, name)).to_sym
+        key = opts.fetch(:as, name).to_sym
         relationships(**{key => opts.merge(method: name, cardinality: :many)})
       end
 
@@ -145,7 +165,7 @@ module SaboTabby
       private
 
       def dsl_methods
-        %i(link type resource_identifier attributes dynamic_attributes meta relationships entity)
+        %i(links type resource_identifier attributes dynamic_attributes meta relationships entity)
       end
 
       def inflector

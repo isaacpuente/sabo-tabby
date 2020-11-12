@@ -22,6 +22,7 @@ module SaboTabby
       optional(:pager)
       optional(:auto_compound).filled(:bool)
       optional(:error).filled(:bool)
+      optional(:max_depth).filled(:integer, gt?: 0, lt?: 5)
     end
   end
 end

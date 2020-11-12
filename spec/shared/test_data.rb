@@ -30,7 +30,9 @@ class NapSpotMapper
   resource :nap_spot do
     resource_identifier :spot_id
     attributes :name
-    link "nap-spot"
+    links do
+      as_self "nap-spot"
+    end
     relationships do
       one :cat
     end
@@ -234,7 +236,7 @@ RSpec.shared_context "test_data" do
     {
       hooman: {method: :hooman, cardinality: :one},
       sand_box: {method: :sand_box, cardinality: :one},
-      nap_spot: {method: :nap_spots, cardinality: :many}
+      nap_spots: {method: :nap_spots, cardinality: :many}
     }
   }
   let(:hooman_mapper_relationships) {
@@ -351,6 +353,60 @@ RSpec.shared_context "test_data" do
       next: 3
     )
   }
+  let(:scope_settings) {
+    {
+      hooman: scope_settings_hooman
+        .merge(
+          cats: scope_settings_cat.merge(
+            hooman: scope_settings_hooman.merge(
+              cats: scope_settings_cat.merge(
+                sand_box: scope_settings_sandbox,
+                nap_spots: scope_settings_nap_spot
+              )
+            ),
+            sand_box: scope_settings_sandbox,
+            nap_spots: scope_settings_nap_spot
+          )
+        ),
+      sand_box: scope_settings_sandbox,
+      nap_spots: scope_settings_nap_spot
+    }
+  }
+
+  let(:scope_settings_cat) {
+    {
+      scope: :babies,
+      type: :cat,
+      identifier: :id,
+      cardinality: :one
+    }
+  }
+  let(:scope_settings_hooman) {
+    {
+      scope: :hooman,
+      type: :people,
+      identifier: :id,
+      cardinality: :one
+    }
+  }
+  let(:scope_settings_nap_spot) {
+    {
+      scope: :nap_spots,
+      type: :nap_spot,
+      identifier: :spot_id,
+      cardinality: :many
+    }
+  }
+  let(:scope_settings_sandbox) {
+    {
+      scope: :sand_box,
+      type: :sand_box,
+      identifier: :id,
+      cardinality: :one
+    }
+  }
+
+
   before do
     %i(cat_mapper hooman_mapper nap_spot_mapper sand_box_mapper).each do |mapper|
       allow(send(mapper).resource).to receive(:options).and_return(options)

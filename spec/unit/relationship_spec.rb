@@ -8,21 +8,15 @@ RSpec.describe SaboTabby::Relationship do
   let(:parent) { cat_mapper.resource }
   let(:options) { {include: [:hooman, :nap_spots]} }
 
-  describe "#initialize" do
-    it "sets readers" do
-      expect(relationship.scope_relationships).to eq({})
-    end
-  end
-
   describe "#call" do
     it "returns resource relationships for scope" do
-      expect(relationship.(cat_mapper, the_cat, **loaded_mappers))
+      expect(relationship.(cat_mapper, the_cat, **scope_settings))
         .to eq(relationship_result[:relationships])
     end
     context "no relationships" do
       let(:parent) { sand_box_mapper.resource }
       it "returns empty hash" do
-        expect(relationship.(sand_box_mapper, sand_box, **loaded_mappers)).to eq({})
+        expect(relationship.(sand_box_mapper, sand_box, **scope_settings)).to eq({})
       end
     end
   end

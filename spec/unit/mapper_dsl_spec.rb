@@ -167,13 +167,13 @@ RSpec.describe SaboTabby::Mapper do
     let(:mapper) { NapSpotMapper }
 
     it "sets resource identifier" do
-      expect(mapper.links).to eq("nap-spot")
+      expect(mapper.links).to eq({:block=>nil, :self=>"nap-spot"})
     end
     context "not set" do
       let(:mapper) { SandBoxMapper }
 
       it "is nil" do
-        expect(mapper.links).to eq(nil)
+        expect(mapper.links).to eq({})
       end
     end
   end
@@ -213,7 +213,7 @@ RSpec.describe SaboTabby::Mapper do
           expect(mapper.relationships).to eq(
             hooman: {method: :hooman, cardinality: :one, type: :people},
             sand_box: {method: :sand_box, cardinality: :one},
-            nap_spot: {method: :nap_spots, cardinality: :many}
+            nap_spots: {method: :nap_spots, cardinality: :many}
           )
         end
       end
@@ -233,8 +233,8 @@ RSpec.describe SaboTabby::Mapper do
         context "as option" do
           it "sets singularized as option value as key and original as 'as' option" do
             expect(mapper.relationships).to eq(
-              cat: {as: :cats, method: :babies, cardinality: :many, type: :cat},
-              nap_spot: {method: :nap_spots, cardinality: :many}
+              cats: {as: :cats, method: :babies, cardinality: :many, type: :cat},
+              nap_spots: {method: :nap_spots, cardinality: :many}
             )
           end
         end

@@ -15,7 +15,6 @@ module SaboTabby
       param :loader
       param :options, default: proc { EMPTY_HASH }
       param :included_documents, default: proc { {} }
-      param :resources, default: proc { {} }
       param :mappers, default: proc { loader.mappers }
       param :compound_paths, default: proc { loader.compound_paths }
 
@@ -40,52 +39,40 @@ module SaboTabby
       def document(scope, path)
         [].tap do |doc|
           Array(scope).flat_map do |scp|
-            parent_name = ""
+            traversed_path = []
             path.to_s.split(".").inject(scp) do |compound_scp, rel_name|
               next compound_scp if rel_name == resource_name(scope)
 
-              compound_scope(compound_scp, rel_name, parent_name) do |cscope|
-                doc.concat(cscope.flat_map { |csco| resource_document(csco, rel_name) })
-                parent_name = rel_name
+              settings = scope_settings(traversed_path, rel_name.to_sym)
+              compound_scope(compound_scp, **settings).tap do |cscope|
+                doc.concat(cscope.flat_map { |csco| resource_document(csco, rel_name, **settings) })
+                traversed_path << rel_name.to_sym
               end
             end
           end
         end
       end
 
-      def compound_scope(scope, name, parent_name)
-        Array(scope).flat_map do |sco|
-          rel_opts = relationship_opts(name, scope_name(sco, parent_name).to_s)
-          relationship_scope(sco, name, **rel_opts).tap do |relationship_scope|
-            yield Array(relationship_scope) if block_given?
-          end
-        end
+      def scope_settings(path, name)
+        return loader.scope_settings.fetch(name, {}) if path.empty?
+
+        loader.scope_settings.dig(*path.uniq << name) || {}
       end
 
-      def relationship_scope(scope, name, **opts)
-        return if scope.nil?
+      def compound_scope(scope, **settings)
+        return [] if settings.empty?
 
-        if opts.any? && scope.respond_to?(opts[:method])
-          scope.send(opts[:method])
-        elsif scope.respond_to?(name)
-          scope.send(name)
-        end
+        Array(scope).flat_map { |sco| sco.send(settings[:scope]) }
       end
 
-      def resource_document(scope, name)
+      def resource_document(scope, name, **settings)
         resource = resource(scope_name(scope), name)
         document_id = resource.document_id(scope)
         return [] if included_documents[document_id] || scope.nil?
 
         Array(scope)
-          .map { |sc| resource.document(sc) }
+          .map { |sc| resource.document(sc, **settings) }
           .tap { included_documents[document_id] = true }
-      end
-
-      def relationship_opts(name, scope_name)
-        mapper(scope_name, name)
-          .relationships
-          .fetch(inflector.singularize(name).to_sym, {})
       end
 
       def resource(scope_name, name)

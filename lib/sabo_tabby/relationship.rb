@@ -15,60 +15,57 @@ module SaboTabby
     # param :options, default: proc { parent.options }
     # param :scope_relationships, default: proc { {} }
 
-    def call(mapper, scope, **mappers)
+    def call(mapper, scope, **scope_settings)
       return {} unless relationships?(mapper)
 
-      build(mapper, scope, **mappers)
+      build(mapper, scope, **scope_settings)
     end
 
     private
 
-    def build(mapper, scope, **mappers)
-      mapper.relationships.each_with_object({}) do |(name, opts), result|
-        rel_scope = relationship_scope(scope, opts[:method])
-        rel_name = opts.fetch(:as, opts[:method])
-        next if skip?(rel_scope)
+    def build(mapper, scope, **scope_settings)
+      mapper_rel_keys = mapper.relationships.keys
+      scope_settings
+        .select { |k, _v| mapper_rel_keys.include?(k) }
+        .each_with_object({}) do |(name, settings), result|
+          rel = send(
+            settings[:cardinality],
+            relationship_scope(scope, settings[:scope]),
+            **settings
+          )
+          next if rel.nil? || rel.empty?
 
-        result[rel_name] = {
-          data: send(opts[:cardinality], mappers, opts.fetch(:as, name).to_s, rel_scope, **opts)
-        }
-      end
+          result[name] = {data: rel}
+        end
     end
 
-    def relationship_scope(scope, method)
-      if scope.respond_to?(method) && !skip?(scope.send(method))
-        scope.send(method)
-      elsif scope.respond_to?("#{method}_id") && !skip?(scope.send("#{method}_id"))
-        id_object(scope, method).new
-      end
+    def relationship_scope(scope, method_name)
+      result = scope.send(method_name)
+      result.is_a?(Numeric) ? id_object(result).new : result
     end
 
     def relationships?(mapper)
       mapper.relationships.any?
     end
 
-    def skip?(scope)
-      scope.nil? || (scope.is_a?(Array) && scope.empty?)
+    def one(scope, **settings)
+      return {} if scope.nil?
+
+      {type: settings[:type].to_s, id: scope.send(settings[:identifier]).to_s}
     end
 
-    def one(mappers, name, scope, **opts)
-      mapper = mappers[name]
-      {type: opts.fetch(:type, mapper.type).to_s, id: scope.send(mapper.resource_identifier).to_s}
-    end
-
-    def many(mappers, name, scope, **opts)
-      mapper_key = inflector.singularize(name)
-      scope.map { |s| one(mappers, mapper_key, s, **opts) }
+    def many(scope, **settings)
+      scope.map { |s| one(s, **settings) }
     end
 
     def inflector
       @inflector ||= SaboTabby::Container[:inflector]
     end
 
-    def id_object(scope, method)
+    def id_object(id)
       Class.new do
         define_method :id do
-          scope.send("#{method}_id")
+          id
         end
       end
     end

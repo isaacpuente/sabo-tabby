@@ -14,6 +14,12 @@ module SaboTabby
       param :options, default: proc { EMPTY_HASH }
       param :resource_mapper, default: proc { mapper }
       param :mappers, default: proc { {} }
+      param :scope_settings, default: proc {
+        next {} if error?
+
+        init_mappers(compound: true)
+        _scope_settings(resource, mapper)
+      }
 
       def init_mappers(compound: false)
         mappers
@@ -31,7 +37,7 @@ module SaboTabby
           if options.fetch(:include, false)
             options[:include] == %w(none) ? [] : options[:include]
           else
-            compound_resources(resource, resource_mapper)
+            auto_included_resources(resource, resource_mapper)
               .then { |c_resources| _compound_paths(c_resources) }
           end
       end
@@ -75,12 +81,12 @@ module SaboTabby
 
       private
 
-      def compound_resources(resource, resource_mapper)
+      def auto_included_resources(scope, resource_mapper)
         resource_mapper.compound_relationships.each_with_object({}) do |(name, opts), result|
-          next unless message?(resource, opts[:method])
+          next unless scope_message?(scope, opts[:method])
 
-          result[name] = compound_resources(
-            message(resource, opts[:method]),
+          result[name] = auto_included_resources(
+            scope_message(scope, opts[:method]),
             mappers[name.to_s] ||= container["mappers.#{name}"]
           )
         end
@@ -96,20 +102,65 @@ module SaboTabby
           end
       end
 
-      def message(resource, message)
+      def scope_message?(scope, message)
+        return false if message.nil?
+
+        Array(scope).any? { |s| s.respond_to?(message) }
+      end
+
+      def scope_message(scope, message)
         return nil if message.nil?
 
-        Array(resource)
-          .find { |r|
-            r.respond_to?(message) &&
-              (r.send(message).is_a?(Array) ? r.send(message).any? : true)
+        Array(scope)
+          .find { |s|
+            s.respond_to?(message) &&
+              (s.send(message).is_a?(Array) ? s.send(message).any? : true)
           }&.send(message)
       end
 
-      def message?(resource, message)
-        return false if message.nil?
+      def scope_name(scope, message)
+        return nil if message.nil?
 
-        Array(resource).any? { |r| r.respond_to?(message) }
+        if Array(scope).any? { |s| s.respond_to?(message) && !skip_setting?(s.send(message)) }
+          message
+        elsif id_object?(scope, message)
+          "#{message}_id"
+        end
+      end
+
+      def id_object?(scope, message)
+        Array(scope).any? { |s|
+          s.respond_to?("#{message}_id") && !skip_setting?(s.send("#{message}_id"))
+        }
+      end
+
+      def _scope_settings(scope, resource_mapper, parent_scopes = [])
+        resource_mapper.relationships.each_with_object({}) do |(name, opts), result|
+          rel_scope_name = scope_name(scope, opts[:method])
+          rel_name = opts.fetch(:as, name)
+          mapper = mappers[inflector.singularize(rel_name)]
+
+          # # max parent/child cycles
+          next if parent_scopes.count { |ps| ps == rel_name } > options.fetch(:max_depth, 4)
+          next if rel_scope_name.nil? || mapper.nil?
+
+          result[rel_name] = {
+            scope: rel_scope_name,
+            type: opts.fetch(:type, mapper.type),
+            identifier: mapper.resource_identifier,
+            cardinality: opts[:cardinality]
+          }.merge!(
+            _scope_settings(
+              scope_message(scope, rel_scope_name),
+              mapper,
+              parent_scopes << resource_mapper.name
+            )
+          )
+        end
+      end
+
+      def skip_setting?(scope)
+        scope.nil? || (scope.is_a?(Array) && scope.empty?)
       end
 
       def container
@@ -117,7 +168,7 @@ module SaboTabby
       end
 
       def inflector
-        @inflector ||= SaboTabby::Container[:inflector]
+        @inflector ||= container[:inflector]
       end
     end
   end

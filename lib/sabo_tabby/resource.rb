@@ -27,9 +27,15 @@ module SaboTabby
       scope.send(mapper.resource_identifier)
     end
 
-    def document(scope)
+    def document(scope, **scope_settings)
       identifier(scope)
-        .then { |doc| doc.merge!(attributes(scope), meta(scope), relationships(scope)) }
+        .then do |doc|
+          doc.merge!(
+            attributes(scope),
+            meta(scope),
+            relationships(scope, **scope_settings)
+          )
+        end
     end
 
     def identifier(scope)
@@ -42,9 +48,9 @@ module SaboTabby
         .then { |result| result.empty? ? {} : {attributes: result} }
     end
 
-    def relationships(scope)
+    def relationships(scope, **scope_settings)
       relationship
-        .call(mapper, scope, **mappers)
+        .call(mapper, scope, **scope_settings)
         .then { |result| result.empty? ? {} : {relationships: result} }
     end
 

@@ -12,7 +12,8 @@ RSpec.describe SaboTabby::Document::Compound do
     instance_double(
       "SaboTabby::Loader",
       mappers: mappers,
-      compound_paths: [:hooman, :nap_spot]
+      compound_paths: %i(hooman nap_spots),
+      scope_settings: scope_settings
     )
   }
   let(:mappers) { loaded_mappers }
@@ -30,19 +31,19 @@ RSpec.describe SaboTabby::Document::Compound do
         receive(:resource).with(mappers: mappers, **options).and_return(hooman_mapper_resource)
       )
       allow(hooman_mapper_resource).to(
-        receive(:document).with(hooman).and_return(compound_document[:hooman])
+        receive(:document).with(hooman, **scope_settings[:hooman]).and_return(compound_document[:hooman])
       )
       allow(nap_spot_mapper).to(
         receive(:resource).with(mappers: mappers, **options).and_return(nap_spot_mapper_resource)
       )
       allow(nap_spot_mapper_resource).to(
-        receive(:document).with(nap_spots[0]).and_return(compound_document[:nap_spot][0])
+        receive(:document).with(nap_spots[0], **scope_settings[:nap_spots]).and_return(compound_document[:nap_spot][0])
       )
       allow(nap_spot_mapper_resource).to(
         receive(:document_id).with(nap_spots[0]).and_return("nap_spot_1")
       )
       allow(nap_spot_mapper_resource).to(
-        receive(:document).with(nap_spots[1]).and_return(compound_document[:nap_spot][1])
+        receive(:document).with(nap_spots[1], **scope_settings[:nap_spots]).and_return(compound_document[:nap_spot][1])
       )
       allow(nap_spot_mapper_resource).to(
         receive(:document_id).with(nap_spots[1]).and_return("nap_spot_2")
@@ -84,7 +85,7 @@ RSpec.describe SaboTabby::Document::Compound do
     }
     context "no includes" do
       let(:loader) {
-        instance_double("SaboTabby::Loader", mappers: {}, compound_paths: [])
+        instance_double("SaboTabby::Loader", mappers: {}, compound_paths: [], scope_settings: {})
       }
       let(:options) { {} }
       it "returns empty compound document" do
@@ -110,11 +111,11 @@ RSpec.describe SaboTabby::Document::Compound do
       end
       it "sends document message to each mappers resource" do
         expect(hooman_mapper_resource)
-          .to receive(:document).with(hooman).exactly(1).times
+          .to receive(:document).with(hooman, **scope_settings[:hooman]).exactly(1).times
         expect(nap_spot_mapper_resource)
-          .to receive(:document).with(nap_spots[0]).exactly(1).times
+          .to receive(:document).with(nap_spots[0], **scope_settings[:nap_spots]).exactly(1).times
         expect(nap_spot_mapper_resource)
-          .to receive(:document).with(nap_spots[1]).exactly(1).times
+          .to receive(:document).with(nap_spots[1], **scope_settings[:nap_spots]).exactly(1).times
 
         compound.(scope)
       end
@@ -124,13 +125,23 @@ RSpec.describe SaboTabby::Document::Compound do
         instance_double(
           "SaboTabby::Loader",
           mappers: mappers,
-          compound_paths: %w(hooman.nap_spots nap_spot)
+          compound_paths: %w(hooman.nap_spots nap_spots),
+          scope_settings: settings
         )
       }
       let(:options) { {include: %w(hooman.nap_spots nap_spots)} }
+      let(:settings) {
+        {
+          hooman: scope_settings[:hooman]
+            .merge(nap_spots: scope_settings_nap_spot)
+        }.merge(scope_settings.reject { |k, _| k == :hooman })
+      }
       before do
+        allow(hooman_mapper_resource).to(
+          receive(:document).with(hooman, **settings[:hooman]).and_return(compound_document[:hooman])
+        )
         allow(nap_spot_mapper_resource).to(
-          receive(:document).with(nap_spots[2]).and_return(compound_document[:nap_spot][2])
+          receive(:document).with(nap_spots[2], **scope_settings[:nap_spots]).and_return(compound_document[:nap_spot][2])
         )
         allow(nap_spot_mapper_resource).to(
           receive(:document_id).with(nap_spots[2]).and_return("nap_spot_3")
@@ -155,13 +166,13 @@ RSpec.describe SaboTabby::Document::Compound do
       end
       it "sends document message to each mappers resource" do
         expect(hooman_mapper_resource)
-          .to receive(:document).with(hooman).exactly(1).times
+          .to receive(:document).with(hooman, **settings[:hooman]).exactly(1).times
         expect(nap_spot_mapper_resource)
-          .to receive(:document).with(nap_spots[0]).exactly(1).times
+          .to receive(:document).with(nap_spots[0], **scope_settings[:nap_spots]).exactly(1).times
         expect(nap_spot_mapper_resource)
-          .to receive(:document).with(nap_spots[1]).exactly(1).times
+          .to receive(:document).with(nap_spots[1], **scope_settings[:nap_spots]).exactly(1).times
         expect(nap_spot_mapper_resource)
-          .to receive(:document).with(nap_spots[2]).exactly(1).times
+          .to receive(:document).with(nap_spots[2], **scope_settings[:nap_spots]).exactly(1).times
 
         compound.(scope)
       end

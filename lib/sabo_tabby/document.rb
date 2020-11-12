@@ -20,7 +20,7 @@ module SaboTabby
     param :resource
     param :options, default: proc { _options }
     param :loader, default: proc { Mapper::Loader.new(resource, name, **options) }
-    param :mappers, default: proc { loader.init_mappers(compound: true) }
+    param :mappers, default: proc { loader.mappers }
 
     def_delegator :mapper_resource, :document
 
@@ -73,8 +73,12 @@ module SaboTabby
     end
 
     def resource_document
-      data = collection? ? resource.map { |r| document(r) } : document(resource)
-      {data: data}.merge!(compound_document, paginate(meta))
+      settings = loader.scope_settings
+      if collection?
+        {data: resource.map { |r| document(r, **settings) }}
+      else
+        {data: document(resource, **settings)}
+      end.merge!(compound_document, paginate(meta))
     end
 
     def paginate(meta)

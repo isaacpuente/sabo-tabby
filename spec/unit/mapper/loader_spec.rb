@@ -7,7 +7,7 @@ RSpec.describe SaboTabby::Mapper::Loader do
   include_context "test_data"
 
   subject(:loader) { described_class.new(resource, resource_name, options) }
-  let(:options) { {include: [:hooman, :nap_spots]} }
+  let(:options) { {include: [:hooman, :nap_spots], max_depth: 1} }
   let(:container) { SaboTabby::Container }
   let(:resource) { the_cat }
   let(:resource_name) { cat_mapper.name.to_s }
@@ -19,7 +19,6 @@ RSpec.describe SaboTabby::Mapper::Loader do
       "sand_box" => sand_box_mapper
     }
   }
-
   before do
     mappers.each do |key, mapper|
       container.stub("mappers.#{key}", mapper)
@@ -36,8 +35,9 @@ RSpec.describe SaboTabby::Mapper::Loader do
       expect(loader.resource).to eq(resource)
       expect(loader.resource_name).to eq(resource_name)
       expect(loader.options).to eq(options)
-      expect(loader.mappers).to eq({})
+      expect(loader.mappers).to eq(mappers)
       expect(loader.resource_mapper).to eq(cat_mapper)
+      expect(loader.scope_settings).to eq(scope_settings)
     end
   end
 

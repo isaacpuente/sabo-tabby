@@ -93,7 +93,7 @@ RSpec.describe SaboTabby::Resource do
 
   describe "#relationships" do
     it "sends message to Relationships" do
-      expect(resource_relationship).to receive(:call).with(cat_mapper, the_cat, **mappers)
+      expect(resource_relationship).to receive(:call).with(cat_mapper, the_cat)
       resource.relationships(the_cat)
     end
   end

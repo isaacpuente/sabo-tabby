@@ -19,7 +19,7 @@ RSpec.describe SaboTabby::Mapper do
 
   describe "#initialize" do
     let(:readers) {
-      %i(attributes meta link resource_identifier dynamic_attributes relationships resource name)
+      %i(attributes meta links resource_identifier dynamic_attributes relationships resource name)
     }
     it "sets classes settings as readers" do
       readers.each do |r|

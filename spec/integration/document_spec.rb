@@ -61,18 +61,21 @@ RSpec.describe SaboTabby::Document do
               cats: {data: [{id: "2", type: "cat"}]},
               nap_spots: {data: [{id: "3", type: "nap_spot"}]}
             },
-            meta: {run_by: :cats}
+            meta: {run_by: :cats},
+            links: {self: "http://localhost/hoomans/hooman-name-1"}
           },
           {
             id: "1",
             type: "nap_spot",
             attributes: {name: nap_spots[0].name},
+            links: {self: "http://localhost/nap-spots/1"},
             meta: {if_i_fits: :i_sits}
           },
           {
             id: "2",
             type: "nap_spot",
             attributes: {name: nap_spots[1].name},
+            links: {self: "http://localhost/nap-spots/2"},
             meta: {if_i_fits: :i_sits}
           },
           {id: "1", type: "sand_box"}
@@ -91,6 +94,7 @@ RSpec.describe SaboTabby::Document do
             data: {
               attributes: {name: "Chair"},
               id: "1",
+              links: {self: "http://localhost/nap-spots/1"},
               meta: {if_i_fits: :i_sits},
               type: "nap_spot"
             }
@@ -157,13 +161,22 @@ RSpec.describe SaboTabby::Document do
         end
         context "single resource with relationships and nested included" do
           let(:options) { {include: %w(hooman.nap_spots nap_spots sand_box)} }
+          let(:additional_nap_spot) {
+            {
+              id: "3",
+              type: "nap_spot",
+              attributes: {name: "Bed"},
+              links: {self: "http://localhost/nap-spots/3"},
+              meta: {if_i_fits: :i_sits}
+            }
+          }
           it "returns resource compound document" do
             expect(JSON.generate(document.call)).to match_json_schema(:jsonapi)
             expect(document.call).to eq(
               data: single_document_response[:data],
               included: [
                 compound_response[0],
-                {id: "3", type: "nap_spot", attributes: {name: "Bed"}, meta: {if_i_fits: :i_sits}},
+                additional_nap_spot,
                 compound_response[1],
                 compound_response[2],
                 compound_response[3]

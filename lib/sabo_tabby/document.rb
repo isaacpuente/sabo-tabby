@@ -44,6 +44,12 @@ module SaboTabby
       {meta: options[:meta]}
     end
 
+    def links
+      return {} unless options[:url]
+
+      {links: {self: options[:url]}}
+    end
+
     def compound_document
       return {} unless compound_document?
 
@@ -78,15 +84,18 @@ module SaboTabby
         {data: resource.map { |r| document(r, **settings) }}
       else
         {data: document(resource, **settings)}
-      end.merge!(compound_document, paginate(meta))
+      end.merge!(compound_document, paginate(meta, links))
     end
 
-    def paginate(meta)
-      return meta unless paginated?
+    def paginate(meta, links)
+      return meta.merge!(links) unless paginated?
 
       @pagination = SaboTabby::Pagination.new(mappers, options)
         .then do |pagination|
-          {meta: meta.fetch(:meta, {}).merge!(pagination.meta), links: pagination.links}
+          {
+            meta: meta.fetch(:meta, {}).merge!(pagination.meta),
+            links: links.fetch(:links, {}).merge!(pagination.links)
+          }
         end
     end
 

@@ -31,7 +31,7 @@ module SaboTabby
     }
     param :document, default: proc { Document.new(resource, validated_options) }
 
-    def as_json(type: :fast_generate)
+    def as_json(type: :to_json)
       case type
       when :fast_generate
         JSON.fast_generate(as_hash, create_additions: false, quirks_mode: true)
@@ -49,7 +49,6 @@ module SaboTabby
     end
 
     def as_hash
-      # @resource_hash ||= document.call
       document.call
     end
   end

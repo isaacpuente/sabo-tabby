@@ -165,15 +165,21 @@ RSpec.describe SaboTabby::Mapper do
 
   describe ".links" do
     let(:mapper) { NapSpotMapper }
-
-    it "sets resource identifier" do
-      expect(mapper.links).to eq({:block=>nil, :self=>"nap-spot"})
+    it "sets link" do
+      expect(mapper.links).to eq(self: ["nap-spots", nil])
     end
     context "not set" do
       let(:mapper) { SandBoxMapper }
 
       it "is nil" do
         expect(mapper.links).to eq({})
+      end
+    end
+    context "with block" do
+      let(:mapper) { HoomanMapper }
+      it "recieves a block" do
+        expect(mapper.links[:self].last.call("http:example.com", "humans", hooman))
+          .to eq("http:example.com/humans/hooman-name-1")
       end
     end
   end

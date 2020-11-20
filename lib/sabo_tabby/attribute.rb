@@ -3,21 +3,25 @@
 # auto_register: false
 
 require "dry-initializer"
-require "forwardable"
 
 module SaboTabby
   class Attribute
-    def call(mapper, scope, **options)
-      return {} unless attributes?(mapper) || dynamic_attributes?(mapper)
+    extend Dry::Initializer
 
-      attributes(mapper, scope, **options)
-        .merge!(dynamic_attributes(mapper, scope, **options))
+    param :resource
+    param :mapper, default: proc { resource.mapper }
+    param :options, default: proc { resource.options }
+
+    def call(scope)
+      return {} unless attributes? || dynamic_attributes?
+
+      attributes(scope).merge!(dynamic_attributes(scope))
     end
 
-    def attributes(mapper, scope, **options)
-      return {} unless attributes?(mapper)
+    def attributes(scope)
+      return {} unless attributes?
 
-      filter(mapper, **options)
+      filter
         .each_with_object({}) do |attribute, result|
           next unless scope.respond_to?(attribute)
 
@@ -25,10 +29,10 @@ module SaboTabby
         end
     end
 
-    def dynamic_attributes(mapper, scope, **options)
-      return {} unless dynamic_attributes?(mapper)
+    def dynamic_attributes(scope)
+      return {} unless dynamic_attributes?
 
-      filter(mapper, dynamic: true, **options)
+      filter(dynamic: true)
         .each_with_object({}) do |(*attributes, block), result|
           attributes.each do |attr|
             value = scope.respond_to?(attr) ? scope.send(attr) : nil
@@ -39,15 +43,15 @@ module SaboTabby
         end
     end
 
-    def attributes?(mapper)
+    def attributes?
       mapper.attributes.any?
     end
 
-    def dynamic_attributes?(mapper)
+    def dynamic_attributes?
       mapper.respond_to?(:dynamic_attributes) && mapper.dynamic_attributes.any?
     end
 
-    def filter(mapper, dynamic: false, **options)
+    def filter(dynamic: false)
       attributes = dynamic ? mapper.dynamic_attributes : mapper.attributes
       fieldset = options.fetch(:fields, {})[mapper.type.to_s]
       return attributes if fieldset.nil?

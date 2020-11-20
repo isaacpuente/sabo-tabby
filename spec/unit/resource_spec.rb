@@ -17,13 +17,20 @@ RSpec.describe SaboTabby::Resource do
       "SaboTabby::Attribute",
       class_double("SaboTabby::Attribute", new: resource_attribute)
     )
+    stub_const(
+      "SaboTabby::Link",
+      class_double("SaboTabby::Link", new: resource_link)
+    )
     allow(resource_attribute)
       .to receive(:call)
-      .with(cat_mapper, the_cat, **options)
+      .with(the_cat)
       .and_return(attribute_result)
     allow(resource_relationship)
       .to receive(:call)
       .and_return(relationship_result[:relationships])
+    allow(resource_link)
+      .to receive(:call)
+      .and_return(link_result[:links])
   end
 
   describe "#initialize" do
@@ -93,7 +100,7 @@ RSpec.describe SaboTabby::Resource do
 
   describe "#relationships" do
     it "sends message to Relationships" do
-      expect(resource_relationship).to receive(:call).with(cat_mapper, the_cat)
+      expect(resource_relationship).to receive(:call).with(the_cat)
       resource.relationships(the_cat)
     end
   end

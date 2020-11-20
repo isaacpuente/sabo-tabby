@@ -12,13 +12,14 @@ module SaboTabby
     extend Dry::Initializer
     extend Forwardable
 
-    def_delegators :mapper, :name, :type, :link, :meta
+    def_delegators :mapper, :name, :type, :meta
 
     param :mapper
     param :options, default: proc { EMPTY_HASH }
     param :mappers, default: proc { {name.to_s => mapper} }
-    param :attribute, default: proc { mapper.attribute }
-    param :relationship, default: proc { mapper.relationship }
+    param :attribute, default: proc { SaboTabby::Attribute.new(self) }
+    param :relationship, default: proc { SaboTabby::Relationship.new(self) }
+    param :link, default: proc { SaboTabby::Link.new(self) }
 
     def id(scope)
       return scope if scope.is_a?(Integer)
@@ -33,7 +34,8 @@ module SaboTabby
           doc.merge!(
             attributes(scope),
             meta(scope),
-            relationships(scope, **scope_settings)
+            relationships(scope, **scope_settings),
+            links(scope)
           )
         end
     end
@@ -44,20 +46,26 @@ module SaboTabby
 
     def attributes(scope)
       attribute
-        .call(mapper, scope, **options)
-        .then { |result| result.empty? ? {} : {attributes: result} }
+        .call(scope)
+        .then { |result| result.any? ? {attributes: result} : {} }
     end
 
     def relationships(scope, **scope_settings)
       relationship
-        .call(mapper, scope, **scope_settings)
-        .then { |result| result.empty? ? {} : {relationships: result} }
+        .call(scope, **scope_settings)
+        .then { |result| result.any? ? {relationships: result} : {} }
     end
 
     def meta(_scope = nil)
       return {} unless meta?
 
       {meta: mapper.meta}
+    end
+
+    def links(scope)
+      link
+        .call(scope)
+        .then { |result| result.any? ? {links: result} : {} }
     end
 
     def meta?

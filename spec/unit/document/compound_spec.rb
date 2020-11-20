@@ -13,7 +13,8 @@ RSpec.describe SaboTabby::Document::Compound do
       "SaboTabby::Loader",
       mappers: mappers,
       compound_paths: %i(hooman nap_spots),
-      scope_settings: scope_settings
+      scope_settings: scope_settings,
+      compound_mappers: loaded_mappers
     )
   }
   let(:mappers) { loaded_mappers }
@@ -85,7 +86,13 @@ RSpec.describe SaboTabby::Document::Compound do
     }
     context "no includes" do
       let(:loader) {
-        instance_double("SaboTabby::Loader", mappers: {}, compound_paths: [], scope_settings: {})
+        instance_double(
+          "SaboTabby::Loader",
+          mappers: {},
+          compound_paths: [],
+          scope_settings: {},
+          compound_mappers: {}
+        )
       }
       let(:options) { {} }
       it "returns empty compound document" do
@@ -126,7 +133,8 @@ RSpec.describe SaboTabby::Document::Compound do
           "SaboTabby::Loader",
           mappers: mappers,
           compound_paths: %w(hooman.nap_spots nap_spots),
-          scope_settings: settings
+          scope_settings: settings,
+          compound_mappers: loaded_mappers,
         )
       }
       let(:options) { {include: %w(hooman.nap_spots nap_spots)} }

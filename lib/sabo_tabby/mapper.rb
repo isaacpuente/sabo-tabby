@@ -7,6 +7,7 @@ require "dry-core"
 require "sabo_tabby/mapper/settings"
 require "sabo_tabby/resource"
 require "sabo_tabby/relationship"
+require "sabo_tabby/link"
 require "sabo_tabby/helpers"
 
 module SaboTabby
@@ -30,7 +31,7 @@ module SaboTabby
             case name
             when :type
               klass.send(key) || klass.send(:_resource)
-            when :relationship, :attribute
+            when :attribute
               next
             else
               klass.send(key)
@@ -49,14 +50,6 @@ module SaboTabby
       def compound_relationships(mapper = self)
         mapper.relationships
           .select { |_rel_name, rel_opts| rel_opts.fetch(:include, false) }
-      end
-
-      def attribute
-        self.class.resource_attribute
-      end
-
-      def relationship
-        self.class.resource_relationship
       end
 
       private
@@ -79,28 +72,18 @@ module SaboTabby
         end
       end
 
-      def links(**params, &block)
-        # links do
-        #   as_self ""
-        #   related do |resource, request|
-        #    
-        #   end
+      def links(*args, &block)
+        # links :self do |url, resource_name, resource|
         # end
-        return yield if block
+        type, name = args
+
+        params = type ? {type => [name, block]} : {}
 
         if cumulative_setting?(:_links, params)
           _setting(:links, config.send(:_links).merge(params), {})
         else
           _setting(:links, params, {})
         end
-      end
-
-      def as_self(link = "", &block)
-        links(**{self: link, block: block})
-      end
-
-      def related(link = "", &block)
-        links(**{related: link, block: block})
       end
 
       def type(name = Undefined)
@@ -154,22 +137,10 @@ module SaboTabby
         relationships(**{key => opts.merge(method: name, cardinality: :many)})
       end
 
-      def resource_relationship
-        @relationship ||= SaboTabby::Relationship.new
-      end
-
-      def resource_attribute
-        @attribute ||= SaboTabby::Attribute.new
-      end
-
       private
 
       def dsl_methods
         %i(links type resource_identifier attributes dynamic_attributes meta relationships entity)
-      end
-
-      def inflector
-        @inflector ||= SaboTabby::Container[:inflector]
       end
 
       def container

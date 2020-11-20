@@ -3,28 +3,25 @@
 # auto_register: false
 
 require "dry-initializer"
-require "forwardable"
 
 module SaboTabby
   class Relationship
     extend Dry::Initializer
-    # extend Forwardable
 
-    # param :parent
-    # param :parent_mapper, default: proc { parent.mapper }
-    # param :options, default: proc { parent.options }
-    # param :scope_relationships, default: proc { {} }
+    param :parent
+    param :parent_mapper, default: proc { parent.mapper }
+    param :mappers, default: proc { parent.mappers }
 
-    def call(mapper, scope, **scope_settings)
-      return {} unless relationships?(mapper)
+    def call(scope, **scope_settings)
+      return {} unless relationships?
 
-      build(mapper, scope, **scope_settings)
+      build(scope, **scope_settings)
     end
 
     private
 
-    def build(mapper, scope, **scope_settings)
-      mapper_rel_keys = mapper.relationships.keys
+    def build(scope, **scope_settings)
+      mapper_rel_keys = parent_mapper.relationships.keys
       scope_settings
         .select { |k, _v| mapper_rel_keys.include?(k) }
         .each_with_object({}) do |(name, settings), result|
@@ -35,7 +32,7 @@ module SaboTabby
           )
           next if rel.nil? || rel.empty?
 
-          result[name] = {data: rel}
+          result[name] = {data: rel}.merge!(links(scope, **settings))
         end
     end
 
@@ -44,8 +41,8 @@ module SaboTabby
       result.is_a?(Numeric) ? id_object(result).new : result
     end
 
-    def relationships?(mapper)
-      mapper.relationships.any?
+    def relationships?
+      parent_mapper.relationships.any?
     end
 
     def one(scope, **settings)
@@ -58,8 +55,12 @@ module SaboTabby
       scope.map { |s| one(s, **settings) }
     end
 
-    def inflector
-      @inflector ||= SaboTabby::Container[:inflector]
+    def links(scope, **settings)
+      return {} unless settings[:links]
+      return {} if settings[:links].all? { |_, v| v.empty? }
+
+      byebug
+      {}
     end
 
     def id_object(id)

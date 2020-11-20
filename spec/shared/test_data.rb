@@ -16,7 +16,10 @@ class CatMapper
       resource.age / 2
     end
     relationships do
-      one :hooman, type: :people
+      one :hooman, type: :people, links: {
+        self: {},
+        related: {}
+      }
       one :sand_box
       many :nap_spots
     end
@@ -30,9 +33,7 @@ class NapSpotMapper
   resource :nap_spot do
     resource_identifier :spot_id
     attributes :name
-    links do
-      as_self "nap-spot"
-    end
+    links :self, "nap-spots"
     relationships do
       one :cat
     end
@@ -54,6 +55,9 @@ class HoomanMapper
     relationships do
       many :babies, as: :cats, type: :cat
       many :nap_spots
+    end
+    links :self, "hoomans" do |url, name, resource|
+      "#{url}/#{name}/#{resource.name.downcase.split(" ").join("-")}-#{resource.id}"
     end
     meta run_by: :cats
   end
@@ -170,9 +174,7 @@ RSpec.shared_context "test_data" do
         "SaboTabby::Resource",
         document_id: "cat_1",
         type: "cat"
-      ),
-      attribute: resource_attribute,
-      relationship: resource_relationship
+      )
     )
   }
   let(:hooman_mapper) {
@@ -189,9 +191,7 @@ RSpec.shared_context "test_data" do
         "SaboTabby::Resource",
         document_id: "people_1",
         type: "people"
-      ),
-      attribute: resource_attribute,
-      relationship: resource_relationship
+      )
     )
   }
   let(:nap_spot_mapper) {
@@ -208,9 +208,7 @@ RSpec.shared_context "test_data" do
         "SaboTabby::Resource",
         document_id: "nap_spot_1",
         type: "nap_spot"
-      ),
-      attribute: resource_attribute,
-      relationship: resource_relationship
+      )
     )
   }
   let(:sand_box_mapper) {
@@ -226,8 +224,6 @@ RSpec.shared_context "test_data" do
         document_id: "sand_box_1",
         type: "sand_box"
       ),
-      attribute: resource_attribute,
-      relationship: resource_relationship,
       compound_relationships: {},
       relationships: sand_box_mapper_relationships
     )
@@ -256,8 +252,10 @@ RSpec.shared_context "test_data" do
       }
     }
   }
+  let(:link_result) { {links: {}} }
   let(:resource_relationship) { instance_double("SaboTabby::Relationship") }
   let(:resource_attribute) { instance_double("SaboTabby::Attribute") }
+  let(:resource_link) { instance_double("SaboTabby::Link") }
   let(:dynamic_attributes) {
     [[:gender, proc { |value| value == :f ? "Ms. Le prr" : "Mr. Le prr" }]]
   }

@@ -15,15 +15,16 @@ module SaboTabby
       param :resource_mapper, default: proc { mapper }
       param :mappers, default: proc { {} }
       param :scope_settings, default: proc {
+        init_mappers(compound: options.fetch(:auto_compound, false))
+
         next {} if error?
 
-        init_mappers(compound: true)
         _scope_settings(resource, mapper)
       }
 
       def init_mappers(compound: false)
         mappers
-          .merge!(resource_name => resource_mapper)
+          .merge!(inflector.singularize(resource_name) => resource_mapper)
           .tap do
             next if error?
 
@@ -144,23 +145,40 @@ module SaboTabby
           next if parent_scopes.count { |ps| ps == rel_name } > options.fetch(:max_depth, 4)
           next if rel_scope_name.nil? || mapper.nil?
 
-          result[rel_name] = {
-            scope: rel_scope_name,
-            type: opts.fetch(:type, mapper.type),
-            identifier: mapper.resource_identifier,
-            cardinality: opts[:cardinality]
-          }.merge!(
-            _scope_settings(
-              scope_message(scope, rel_scope_name),
-              mapper,
-              parent_scopes << resource_mapper.name
+          result[rel_name] = opts
+            .merge!(
+              {
+                scope: rel_scope_name,
+                type: opts.fetch(:type, mapper.type),
+                identifier: mapper.resource_identifier
+              },
+              _scope_settings(
+                scope_message(scope, rel_scope_name),
+                mapper,
+                parent_scopes << resource_mapper.name
+              )
             )
-          )
         end
       end
 
       def skip_setting?(scope)
         scope.nil? || (scope.is_a?(Array) && scope.empty?)
+      end
+
+      def setting_entry(scope, mapper, scope_name, parent_scopes, **relationship_opts)
+        relationship_opts
+          .merge!(
+            {
+              scope: scope_name,
+              type: relationship_opts.fetch(:type, mapper.type),
+              identifier: mapper.resource_identifier
+            },
+            _scope_settings(
+              scope_message(scope, scope_name),
+              mapper,
+              parent_scopes << resource_mapper.name
+            )
+          )
       end
 
       def container

@@ -2,7 +2,7 @@
 # auto_register: false
 
 module SaboTabby
-  VERSION = '0.0.1'.freeze
+  VERSION = '0.3.0'.freeze
 end
 
 

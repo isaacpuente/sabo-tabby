@@ -9,8 +9,8 @@ SPEC_ROOT = Pathname(__FILE__).dirname
 
 require SPEC_ROOT.join("../system/sabo_tabby/container")
 
-Dir[SPEC_ROOT.join("support/**/*.rb").to_s].each(&method(:require))
-Dir[SPEC_ROOT.join("shared/**/*.rb").to_s].each(&method(:require))
+Dir[SPEC_ROOT.join("support/**/*.rb").to_s].sort.each(&method(:require))
+Dir[SPEC_ROOT.join("shared/**/*.rb").to_s].sort.each(&method(:require))
 
 SaboTabby::Container.enable_stubs!
 

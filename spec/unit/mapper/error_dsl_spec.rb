@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "spec/shared/test_data"
 require "sabo_tabby/mapper/error"
 require "sabo_tabby/mapper/standard_error"
 

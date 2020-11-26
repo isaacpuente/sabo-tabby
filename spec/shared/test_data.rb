@@ -1,247 +1,164 @@
 # frozen_string_literal: true
 
-require "sabo_tabby/mapper"
-require "sabo_tabby/mapper/error"
-require "sabo_tabby/mapper/pagination"
-
-class CatMapper
-  include SaboTabby::Mapper
-
-  resource :cat do
-    attributes :name, :age, :family
-    attribute :gender do |value|
-      value == :f ? "Ms. Le prr" : "Mr. Le prr"
+class BaseTestClass
+  def initialize(**args)
+    args.each do |name, value|
+      self.class.attr_accessor name
+      instance_variable_set("@#{name}", value)
     end
-    attribute :cat_years do |_value, resource|
-      resource.age / 2
-    end
-    relationships do
-      one :hooman, type: :people, links: {
-        self: {},
-        related: {}
-      }
-      one :sand_box
-      many :nap_spots
-    end
-    meta code_name: :feline
   end
 end
 
-class NapSpotMapper
-  include SaboTabby::Mapper
+class Cat < BaseTestClass; end
 
-  resource :nap_spot do
-    resource_identifier :spot_id
-    attributes :name
-    links :self, "nap-spots"
-    relationships do
-      one :cat
-    end
-    meta if_i_fits: :i_sits
-  end
+class Hooman < BaseTestClass; end
+
+class NapSpot < BaseTestClass; end
+
+class SandBox < BaseTestClass; end
+
+class Job < BaseTestClass; end
+
+class Project < BaseTestClass; end
+
+class ProjectType < BaseTestClass; end
+
+class User < BaseTestClass; end
+
+class Asset < BaseTestClass; end
+
+class Tag < BaseTestClass; end
+
+class Role < BaseTestClass; end
+
+class Status < BaseTestClass; end
+
+def new_asset(project, **data)
+  Asset.new(
+    id: data.fetch(:id, rand(1..100)),
+    name: data.fetch(:name, "asset name #{rand(1.100)}"),
+    cover_image: data.fetch(:cover_image, false),
+    type: data.fetch(:type, 0),
+    project: project,
+    tags: data.fetch(:tags, [])
+  )
 end
 
-class SandBoxMapper
-  include SaboTabby::Mapper
-  resource :sand_box
+def new_project(**data)
+  Project.new(
+    id: data.fetch(:id, rand(1..100)),
+    name: data.fetch(:name, "project name #{rand(1..100)}"),
+    description: data.fetch(:description, "description of a project #{rand(1..100)}"),
+    created_at: Time.now,
+    updated_at: Time.now,
+    users: data.fetch(:users, []),
+    assets: data.fetch(:assets, []),
+    tags: data.fetch(:tags, []),
+    type: data.fetch(:project_type, nil)
+  )
 end
 
-class HoomanMapper
-  include SaboTabby::Mapper
-
-  resource :hooman do
-    type :people
-    attributes :name
-    relationships do
-      many :babies, as: :cats, type: :cat
-      many :nap_spots
-    end
-    links :self, "hoomans" do |url, name, resource|
-      "#{url}/#{name}/#{resource.name.downcase.split(" ").join("-")}-#{resource.id}"
-    end
-    meta run_by: :cats
-  end
-end
-
-class EmptyMapper
-  include SaboTabby::Mapper
-end
-
-class ValidationErrorMapper
-  include SaboTabby::Mapper::Error
-
-  resource :validation_error do
-    status 422
-    title "Validation error"
-    code 3
-    type :validation_error
-    detail do |error|
-      "Validation #{error.message}"
-    end
-    origin(&:origin)
-  end
-end
-
-class WithoutArgErrorMapper
-  include SaboTabby::Mapper::Error
-  resource
-end
-
-class WithoutBlockErrorMapper
-  include SaboTabby::Mapper::Error
-  resource :error
-end
-
-class CustomPaginationMapper
-  include SaboTabby::Mapper::Pagination
-
-  resource :custom_pagination do
-    current :this_page
-    first :first
-    last :last
-    next_page :next
-    prev_page :prev
-    page_size :page_size
-    total_pages :pages
-    total_records :total_records
-  end
-end
-
-class WithoutArgPaginationMapper
-  include SaboTabby::Mapper::Pagination
-  resource
-end
-
-class Hooman
-  attr_reader :id, :name, :babies, :nap_spots
-
-  def initialize(id, name, babies = [], nap_spots = [])
-    @id, @name, @babies, @nap_spots = id, name, babies, nap_spots
-  end
-end
-
-class NapSpot
-  attr_reader :spot_id, :name
-
-  def initialize(id, name)
-    @spot_id, @name = id, name
-  end
-end
-
-class SandBox
-  attr_reader :id
-
-  def initialize(id)
-    @id = id
-  end
-end
-
-class Cat
-  attr_reader :id, :name, :age, :family, :gender, :hooman, :nap_spots, :sand_box
-
-  def initialize(id, name, age, family, gender, hooman, nap_spots, sand_box)
-    @id, @name, @age, @family, @gender, @hooman, @nap_spots, @sand_box =
-      id, name, age, family, gender, hooman, nap_spots, sand_box
-  end
+def new_user(**data)
+  User.new(
+    id: data.fetch(:id, rand(1..100)),
+    firstname: data.fetch(:firstname, "firstname #{rand(1..100)}"),
+    lastname: data.fetch(:lastname, "lastname #{rand(1..100)}"),
+    email: data.fetch(:email, "user_#{rand(1..100)}@domain.com"),
+    status: data.fetch(:status, nil),
+    projects: data.fetch(:projects, []),
+    role: data.fetch(:role, nil)
+  )
 end
 
 RSpec.shared_context "test_data" do
-  let(:hooman) { Hooman.new(1, "Hooman name", [], [nap_spots[2]]) }
-  let(:nap_spots) { [NapSpot.new(1, "Chair"), NapSpot.new(2, "Sofa"), NapSpot.new(3, "Bed")] }
-  let(:sand_box) { SandBox.new(1) }
-  let(:the_cat) {
-    Cat
-      .new(2, "Nibbler", 9, "Domestic", :f, hooman, [nap_spots[0], nap_spots[1]], sand_box)
-      .tap { |cat| hooman.babies << cat }
+  include_context "mappers"
+
+  let(:project_types) {
+    [ProjectType.new(id: 1, name: "External"), ProjectType.new(id: 2, name: "Internal")]
   }
-  let(:new_cat) {
-    Cat
-      .new(3, "Snuggles", 3, "Russian blue", :m, hooman, [], nil)
-      .tap { |cat| hooman.babies << cat }
+  let(:roles) { [Role.new(id: 1, name: "admin"), Role.new(id: 2, name: "designer")] }
+  let(:statuses) { [Status.new(id: 1, name: "Unverified"), Status.new(id: 2, name: "Verified")] }
+  let(:project) {
+    new_project(
+      id: 12,
+      name: "EVVE",
+      description: "Emptyness of Vanity, Vanity of Emptyness",
+      project_type: project_types.last
+    ).tap do |p|
+      p.assets = Array.new(4) { |i| new_asset(p, id: i + 1, tags: tags.first(2)) }
+      p.tags = tags.last(2)
+      p.users = new_user(id: 1308, role: roles.first, projects: [p], status: statuses.last)
+    end
   }
-  let(:cat_mapper) {
-    instance_double(
-      "CatMapper",
-      name: :cat,
-      resource_identifier: :id,
-      type: :cat,
-      attributes: %i(name age family),
-      meta: {code_name: :feline},
-      dynamic_attributes: dynamic_attributes,
-      relationships: cat_mapper_relationships,
-      compound_relationships: {},
-      resource: instance_double(
-        "SaboTabby::Resource",
-        document_id: "cat_1",
-        type: "cat"
-      )
-    )
-  }
-  let(:hooman_mapper) {
-    instance_double(
-      "HoomanMapper",
-      name: :hooman,
-      type: :people,
-      attributes: %i(name),
-      resource_identifier: :id,
-      meta: {},
-      relationships: hooman_mapper_relationships,
-      compound_relationships: {},
-      resource: instance_double(
-        "SaboTabby::Resource",
-        document_id: "people_1",
-        type: "people"
-      )
-    )
-  }
-  let(:nap_spot_mapper) {
-    instance_double(
-      "NapSpotMapper",
-      name: :nap_spots,
-      type: :nap_spot,
-      attributes: %i(name),
-      meta: {if_i_fits: :i_sits},
-      resource_identifier: :spot_id,
-      relationships: nap_spot_mapper_relationships,
-      compound_relationships: {},
-      resource: instance_double(
-        "SaboTabby::Resource",
-        document_id: "nap_spot_1",
-        type: "nap_spot"
-      )
-    )
-  }
-  let(:sand_box_mapper) {
-    instance_double(
-      "SandBoxMapper",
-      name: :sand_box,
-      type: :sand_box,
-      attributes: [],
-      meta: {},
-      resource_identifier: :id,
-      resource: instance_double(
-        "SaboTabby::Resource",
-        document_id: "sand_box_1",
-        type: "sand_box"
-      ),
-      compound_relationships: {},
-      relationships: sand_box_mapper_relationships
-    )
-  }
-  let(:cat_mapper_relationships) {
-    {
-      hooman: {method: :hooman, cardinality: :one},
-      sand_box: {method: :sand_box, cardinality: :one},
-      nap_spots: {method: :nap_spots, cardinality: :many}
+  let(:projects) {
+    users = Array.new(3) { |i|
+      new_user(id: i + 1, role: roles.sample, status: statuses.sample)
+    }
+    Array.new(5) { |i|
+      new_project(id: i + 1, type: project_types.sample, tags: Array(tags.sample(1..2))).tap do |p|
+        p.assets = Array.new(4) { new_asset(p, tags: Array(tags.sample(rand(1..4)))) }
+        p.tags = Array(tags.sample(rand(1..4)))
+        p.users = Array(users.sample(rand(1..3)))
+        p.users.each { |u| u.projects = u.projects << p }
+      end
     }
   }
-  let(:hooman_mapper_relationships) {
-    {baby: {as: :cats, method: :babies, cardinality: :one, type: :cat}}
+  let(:tags) {
+    [
+      Tag.new(id: 1, name: "First tag"),
+      Tag.new(id: 2, name: "Second tag"),
+      Tag.new(id: 3, name: "Third tag"),
+      Tag.new(id: 4, name: "Fourth tag")
+    ]
   }
-  let(:nap_spot_mapper_relationships) {
-    {cat: {method: :cat, cardinality: :one}}
+  let(:hooman) {
+    Hooman.new(
+      id: 1,
+      name: "Hooman name",
+      babies: [],
+      nap_spots: [nap_spots[2]],
+      jobs: jobs.first(2)
+    )
   }
-  let(:sand_box_mapper_relationships) { {} }
+  let(:nap_spots) {
+    [
+      NapSpot.new(spot_id: 1, name: "Chair"),
+      NapSpot.new(spot_id: 2, name: "Sofa"),
+      NapSpot.new(spot_id: 3, name: "Bed")
+    ]
+  }
+  let(:jobs) {
+    [
+      Job.new(id: 1, cat_id: 1, name: "Feed"),
+      Job.new(id: 2, cat_id: 1, name: "Clean sandbox"),
+      Job.new(id: 3, cat_id: 1, name: "Pet")
+    ]
+  }
+  let(:sand_box) { SandBox.new(id: 1) }
+  let(:the_cat) {
+    Cat.new(
+      id: 2,
+      name: "Nibbler",
+      age: 9,
+      family: "Domestic",
+      gender: :f,
+      hooman: hooman,
+      nap_spots: [nap_spots[0], nap_spots[1]],
+      sand_box: sand_box
+    ).tap { |cat| hooman.babies << cat }
+  }
+  let(:new_cat) {
+    Cat.new(
+      id: 3,
+      name: "Snuggles",
+      age: 3,
+      family: "Russian blue",
+      gender: :m,
+      hooman: hooman,
+      nap_spots: [],
+      sand_box: nil
+    ).tap { |cat| hooman.babies << cat }
+  }
   let(:attribute_result) { {age: 9, family: "Domestic", gender: "Ms. Le prr", name: "Nibbler"} }
   let(:relationship_result) {
     {
@@ -260,71 +177,6 @@ RSpec.shared_context "test_data" do
     [[:gender, proc { |value| value == :f ? "Ms. Le prr" : "Mr. Le prr" }]]
   }
   let(:options) { {} }
-  let(:loaded_mappers) {
-    {
-      "cat" => cat_mapper,
-      "hooman" => hooman_mapper,
-      "nap_spot" => nap_spot_mapper,
-      "sand_box" => sand_box_mapper
-    }
-  }
-  let(:loaded_error_mappers) { {"validation_error" => validation_error_mapper} }
-  let(:validation_error_mapper) {
-    instance_double(
-      "ValidationErrorMapper",
-      name: :validation_error,
-      type: :validation_error,
-      status: 422,
-      title: "Validation error",
-      detail: proc { |error| "#{error.message} Name must be filled" },
-      code: "3",
-      origin: proc { "/data/origin" },
-      resource: instance_double("SaboTabby::Error")
-    )
-  }
-  let(:standard_error_mapper) {
-    instance_double(
-      "SaboTabby::Mapper::StandardError",
-      name: :standard_error,
-      type: :standard_error,
-      status: 400,
-      title: "Error",
-      detail: proc { |error| "#{error.message} User must exist." },
-      code: "4",
-      origin: proc { nil },
-      resource: instance_double("SaboTabby::Error")
-    )
-  }
-  let(:default_pagination_mapper) {
-    instance_double(
-      "SaboTabby::Mapper::DefaultPagination",
-      name: :default_pagination,
-      current: :current_page,
-      first: :first_in_page,
-      last: :last_in_page,
-      next_page: :next_page,
-      prev_page: :prev_page,
-      page_size: :per_page,
-      total_pages: :total_pages,
-      total_records: :total,
-      pager: pager
-    )
-  }
-  let(:custom_pagination_mapper) {
-    instance_double(
-      "CustomPagination",
-      name: :custom_pagination,
-      current: :this_page,
-      first: :first,
-      last: :last,
-      next_page: :next,
-      prev_page: :prev,
-      page_size: :page_size,
-      total_pages: :pages,
-      total_records: :total_records,
-      pager: custom_pager
-    )
-  }
   let(:pager) {
     double(
       "Pager",
@@ -353,38 +205,135 @@ RSpec.shared_context "test_data" do
   }
   let(:scope_settings) {
     {
-      hooman: scope_settings_hooman
-        .merge(
-          cats: scope_settings_cat.merge(
-            hooman: scope_settings_hooman.merge(
-              cats: scope_settings_cat.merge(
-                sand_box: scope_settings_sandbox,
-                nap_spots: scope_settings_nap_spot
-              )
-            ),
-            sand_box: scope_settings_sandbox,
-            nap_spots: scope_settings_nap_spot
-          )
-        ),
+      hooman: scope_settings_hooman.merge(
+        cats: scope_settings_cat,
+        jobs: scope_settings_job,
+        nap_spots: scope_settings_nap_spot
+      ),
       sand_box: scope_settings_sandbox,
       nap_spots: scope_settings_nap_spot
     }
   }
+  let(:custom_scope_settings) {
+    {
+      hooman: scope_settings_hooman.merge(
+        cats: scope_settings_cat.merge(
+          hooman: scope_settings_hooman.merge(
+            cats: scope_settings_cat,
+            jobs: scope_settings_job,
+            nap_spots: scope_settings_nap_spot
+          ),
+          sand_box: scope_settings_sandbox,
+          nap_spots: scope_settings_nap_spot
+        ),
+        jobs: scope_settings_job,
+        nap_spots: scope_settings_nap_spot
+      ),
+      sand_box: scope_settings_sandbox,
+      nap_spots: scope_settings_nap_spot
+    }
+  }
+  let(:auto_compound_scope_settings) {
+    {
+      assets: {
+        cardinality: :many,
+        identifier: :id,
+        include: true,
+        method: :assets,
+        project: {
+          cardinality: :one,
+          identifier: :id,
+          method: :project,
+          scope: :project,
+          type: :project
+        },
+        scope: :assets,
+        tags: {
+          cardinality: :many,
+          identifier: :id,
+          include: true,
+          method: :tags,
+          scope: :tags,
+          type: :tag
+        },
+        type: :asset
+      },
+      project_type: {
+        as: :project_type,
+        cardinality: :one,
+        identifier: :id,
+        include: true,
+        method: :type,
+        scope: :type,
+        type: :project_type
+      },
+      tags: {
+        cardinality: :many,
+        identifier: :id,
+        include: true,
+        method: :tags,
+        scope: :tags,
+        type: :tag
+      },
+      users: {
+        cardinality: :many,
+        identifier: :id,
+        include: true,
+        method: :users,
+        projects: {
+          cardinality: :many,
+          identifier: :id,
+          include: true,
+          method: :projects,
+          scope: :projects,
+          type: :project
+        },
+        role: {
+          cardinality: :one,
+          identifier: :id,
+          include: true,
+          method: :role,
+          scope: :role,
+          type: :role
+        },
+        scope: :users,
+        type: :user
+      }
+    }
+  }
+  let(:max_depth) { 4 }
+
 
   let(:scope_settings_cat) {
     {
-      scope: :babies,
+      as: :cats,
       type: :cat,
-      identifier: :id,
-      cardinality: :one
+      method: :babies,
+      cardinality: :many,
+      scope: :babies,
+      identifier: :id
     }
   }
   let(:scope_settings_hooman) {
     {
-      scope: :hooman,
       type: :people,
+      method: :hooman,
+      scope: :hooman,
+      cardinality: :one,
       identifier: :id,
-      cardinality: :one
+      links: {
+        related: {},
+        self: {}
+      }
+    }
+  }
+  let(:scope_settings_job) {
+    {
+      cardinality: :many,
+      identifier: :id,
+      method: :jobs,
+      scope: :jobs,
+      type: :job
     }
   }
   let(:scope_settings_nap_spot) {
@@ -392,7 +341,8 @@ RSpec.shared_context "test_data" do
       scope: :nap_spots,
       type: :nap_spot,
       identifier: :spot_id,
-      cardinality: :many
+      cardinality: :many,
+      method: :nap_spots
     }
   }
   let(:scope_settings_sandbox) {
@@ -400,17 +350,8 @@ RSpec.shared_context "test_data" do
       scope: :sand_box,
       type: :sand_box,
       identifier: :id,
-      cardinality: :one
+      cardinality: :one,
+      method: :sand_box
     }
   }
-
-
-  before do
-    %i(cat_mapper hooman_mapper nap_spot_mapper sand_box_mapper).each do |mapper|
-      allow(send(mapper).resource).to receive(:options).and_return(options)
-      allow(send(mapper).resource).to receive(:mapper).and_return(send(mapper))
-      allow(send(mapper).resource).to receive(:mappers).and_return(loaded_mappers)
-    end
-  end
-
 end

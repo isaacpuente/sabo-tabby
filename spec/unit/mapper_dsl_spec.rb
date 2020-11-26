@@ -217,7 +217,12 @@ RSpec.describe SaboTabby::Mapper do
 
         it "sets singularized method name as key and original as method option" do
           expect(mapper.relationships).to eq(
-            hooman: {method: :hooman, cardinality: :one, type: :people},
+            hooman: {
+              method: :hooman,
+              cardinality: :one,
+              type: :people,
+              links: {related: {}, self: {}}
+            },
             sand_box: {method: :sand_box, cardinality: :one},
             nap_spots: {method: :nap_spots, cardinality: :many}
           )
@@ -240,6 +245,7 @@ RSpec.describe SaboTabby::Mapper do
           it "sets singularized as option value as key and original as 'as' option" do
             expect(mapper.relationships).to eq(
               cats: {as: :cats, method: :babies, cardinality: :many, type: :cat},
+              jobs: {cardinality: :many, method: :jobs},
               nap_spots: {method: :nap_spots, cardinality: :many}
             )
           end

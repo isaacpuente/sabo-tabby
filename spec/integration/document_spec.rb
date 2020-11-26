@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "spec/shared/test_data"
 require "sabo_tabby/document"
 
 RSpec.describe SaboTabby::Document do
@@ -59,6 +58,7 @@ RSpec.describe SaboTabby::Document do
             attributes: {name: hooman.name},
             relationships: {
               cats: {data: [{id: "2", type: "cat"}]},
+              jobs: {data: [{id: "1", type: "job"}, {id: "2", type: "job"}]},
               nap_spots: {data: [{id: "3", type: "nap_spot"}]}
             },
             meta: {run_by: :cats},

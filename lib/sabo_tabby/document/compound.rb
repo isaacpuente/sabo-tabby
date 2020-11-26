@@ -15,10 +15,7 @@ module SaboTabby
       param :loader
       param :options, default: proc { EMPTY_HASH }
       param :included_documents, default: proc { {} }
-      param :mappers, default: proc {
-        loader.compound_mappers unless options.fetch(:auto_compound, false)
-        loader.mappers
-      }
+      param :mappers, default: proc { loader.mappers }
       param :compound_paths, default: proc { loader.compound_paths }
 
       def call(scope)

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require "spec/shared/test_data"
 require "sabo_tabby/mapper/loader"
+require "sabo_tabby/mapper/standard_error"
 
 RSpec.describe SaboTabby::Mapper::Loader do
   include_context "test_data"
@@ -11,23 +11,18 @@ RSpec.describe SaboTabby::Mapper::Loader do
   let(:container) { SaboTabby::Container }
   let(:resource) { the_cat }
   let(:resource_name) { cat_mapper.name.to_s }
-  let(:mappers) {
-    {
-      "cat" => cat_mapper,
-      "hooman" => hooman_mapper,
-      "nap_spot" => nap_spot_mapper,
-      "sand_box" => sand_box_mapper
-    }
-  }
+
   before do
-    mappers.each do |key, mapper|
+    loaded_mappers.each do |key, mapper|
       container.stub("mappers.#{key}", mapper)
     end
+    container.stub("mappers.errors.standard_error", standard_error_mapper)
   end
   after do
-    mappers.each do |key, _mapper|
+    loaded_mappers.each do |key, _mapper|
       container.unstub("mappers.#{key}")
     end
+    container.unstub("mappers.errors.standard_error")
   end
 
   describe "#initialize" do
@@ -35,38 +30,84 @@ RSpec.describe SaboTabby::Mapper::Loader do
       expect(loader.resource).to eq(resource)
       expect(loader.resource_name).to eq(resource_name)
       expect(loader.options).to eq(options)
-      expect(loader.mappers).to eq(mappers)
+      expect(loader.mappers).to eq(loaded_mappers)
       expect(loader.resource_mapper).to eq(cat_mapper)
       expect(loader.scope_settings).to eq(scope_settings)
+      expect(loader.compound_paths).to eq(%i(hooman nap_spots))
+    end
+    context "error" do
+      let(:resource_name) { "standard_error" }
+      it "sets readers" do
+        expect(loader.mappers).to eq({resource_name => standard_error_mapper})
+        expect(loader.compound_paths).to eq([])
+        expect(loader.scope_settings).to eq({})
+      end
+    end
+    context "compound_path" do
+      context "auto compound" do
+        it "returns auto inlcude paths"
+      end
+      context "options include" do
+        let(:options) { {include: %w(hooman.nap_spots nap_spots sand_box)} }
+        it "returns input" do
+          expect(loader.compound_paths).to eq(options[:include])
+        end
+        context "none" do
+          let(:options) { {include: %w(none)} }
+          it "is empty" do
+            expect(loader.compound_paths).to eq([])
+          end
+        end
+      end
     end
   end
 
-  describe "#init_mappers" do
+  describe "#mappers" do
     context "success" do
       it "loads resource and resource's relationship mappers" do
-        expect(loader.init_mappers).to eq(loaded_mappers)
+        expect(loader.mappers).to eq(loaded_mappers)
       end
       context "compound" do
         it "inlcudes compound document mappers" do
-          expect(loader.init_mappers(compound: true)).to eq(loaded_mappers)
+          expect(loader.mappers).to eq(loaded_mappers)
         end
       end
       context "error" do
         subject(:loader) {
-          described_class.new(StandardError.new("oops"), validation_error_mapper.name.to_s, options)
+          described_class.new(StandardError.new("oops"), standard_error_mapper.name.to_s, options)
         }
-        before do
-          container.stub("mappers.errors.validation_error", validation_error_mapper)
-        end
-        after do
-          container.unstub("mappers.errors.validation_error")
-        end
-        xcontext "through options" do
-          it "loads error mappers"
+        context "through options" do
+          subject(:loader) {
+            described_class.new(the_cat, standard_error_mapper.name.to_s, options)
+          }
+          let(:options) { {error: true} }
+          it "loads error mappers" do
+            expect(loader.mappers).to eq(loaded_error_mappers)
+          end
         end
         context "through mapper name" do
+          subject(:loader) {
+            described_class.new(
+              StandardError.new("oops"),
+              validation_error_mapper.name.to_s,
+              options
+            )
+          }
+          let(:resource_name) { "validation_error" }
+          before do
+            container.stub("mappers.errors.validation_error", validation_error_mapper)
+          end
+          after do
+            container.unstub("mappers.errors.validation_error")
+          end
           it "loads error mappers" do
-            expect(loader.init_mappers).to eq(loaded_error_mappers)
+            expect(loader.mappers).to eq("validation_error" => validation_error_mapper)
+          end
+        end
+        context "unknown mapper" do
+          let(:resource_name) { "unknown_error" }
+          it "returns standard error mapper" do
+            expect(loader.mappers).to eq(loaded_error_mappers)
           end
         end
       end
@@ -82,38 +123,35 @@ RSpec.describe SaboTabby::Mapper::Loader do
     end
   end
 
-
-  xdescribe "#mapper" do
+  describe "#mapper" do
     context "error" do
-      it "returns error mapper"
+      let(:options) { {error: true} }
+      subject(:loader) {
+        described_class.new(StandardError.new("oops"), standard_error_mapper.name.to_s, options)
+      }
+      it "returns error mapper" do
+        expect(loader.mapper).to eq(standard_error_mapper)
+      end
     end
-    it "returns resource mapper"
-  end
-
-  xdescribe "#error_mapper" do
-    context "unknown mapper" do
-      it "returns standard error mapper"
+    it "returns resource mapper" do
+      expect(loader.mapper).to eq(cat_mapper)
     end
-    it "returns error mapper"
   end
 
-  xdescribe "#relationship_mappers" do
-    it "returns resrource's mapper relationship mappers"
-    it "adds resrource's mapper relationship mappers to reader"
-  end
-
-  xdescribe "#compound_mappers" do
-    context "options include"
-    context "mapper relationship settings include"
-  end
-
-  xdescribe "#compound_path" do
-    context "options include"
-    context "mapper relationship settings include"
-  end
-
-  xdescribe "#error?" do
-    context "true"
-    context "false"
+  describe "#error?" do
+    context "options" do
+      let(:options) { {error: true} }
+      it "is true" do
+        expect(loader.error?).to be true
+      end
+    end
+    context "resource name" do
+      subject(:loader) {
+        described_class.new(StandardError.new("oops"), standard_error_mapper.name.to_s, options)
+      }
+      it "is true" do
+        expect(loader.error?).to be true
+      end
+    end
   end
 end

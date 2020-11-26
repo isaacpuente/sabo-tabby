@@ -52,7 +52,7 @@ module SaboTabby
     end
 
     def many(scope, **settings)
-      scope.map { |s| one(s, **settings) }
+      scope.flatten.map { |s| one(s, **settings) }
     end
 
     def links(scope, **settings)

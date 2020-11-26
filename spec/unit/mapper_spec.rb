@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "spec/shared/test_data"
 require "sabo_tabby/mapper"
 
 RSpec.describe SaboTabby::Mapper do

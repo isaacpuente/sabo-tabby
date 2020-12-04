@@ -15,13 +15,13 @@ module SaboTabby
     param :options, default: proc { resource.options }
     param :mappers, default: proc { resource.mappers }
 
-    def call(scope, relationship_links: false)
+    def call(scope)
       return {} unless links?
 
-      url = options.fetch(:url, "http://localhost")
+      url = options.fetch(:url, "")
 
       mapper.links.each_with_object({}) do |(type, (name, block)), result|
-        link = build_resource_links(scope, name, url, &block)
+        link = build_links(scope, name, url, &block)
         next if link.nil? || link.empty?
 
         result[type] = link
@@ -34,7 +34,7 @@ module SaboTabby
       mapper.respond_to?(:links) && mapper.links.any?
     end
 
-    def build_resource_links(scope, name, url, &block)
+    def build_links(scope, name, url, &block)
       name = name == Undefined ? inflector.pluralize(mapper.name) : name
       if block
         yield url, name, scope

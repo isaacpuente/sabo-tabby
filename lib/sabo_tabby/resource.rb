@@ -6,11 +6,13 @@ require "dry-initializer"
 require "forwardable"
 require "sabo_tabby/attribute"
 require "sabo_tabby/relationship"
+require "sabo_tabby/helpers"
 
 module SaboTabby
   class Resource
     extend Dry::Initializer
     extend Forwardable
+    include Helpers
 
     def_delegators :mapper, :name, :type, :meta
 
@@ -41,31 +43,31 @@ module SaboTabby
     end
 
     def identifier(scope)
-      {type: type.to_s, id: id(scope).to_s}
+      {"type" => type, "id" => id(scope).to_s}
     end
 
     def attributes(scope)
       attribute
         .call(scope)
-        .then { |result| result.any? ? {attributes: result} : {} }
+        .then { |result| result.any? ? {"attributes" => result} : {} }
     end
 
     def relationships(scope, **scope_settings)
       relationship
         .call(scope, **scope_settings)
-        .then { |result| result.any? ? {relationships: result} : {} }
+        .then { |result| result.any? ? {"relationships" => result} : {} }
     end
 
     def meta(_scope = nil)
       return {} unless meta?
 
-      {meta: mapper.meta}
+      {"meta" => mapper.meta}
     end
 
     def links(scope)
       link
         .call(scope)
-        .then { |result| result.any? ? {links: result} : {} }
+        .then { |result| result.any? ? {"links" => result} : {} }
     end
 
     def meta?

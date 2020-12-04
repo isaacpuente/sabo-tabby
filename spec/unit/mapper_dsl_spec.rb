@@ -14,7 +14,7 @@ RSpec.describe SaboTabby::Mapper do
     let(:mapper) { LittleHooman.new }
 
     it "initializes superclass settings first" do
-      expect(mapper.type).to eq(:people)
+      expect(mapper.type).to eq("people")
     end
     it "adds specialized settings" do
       expect(mapper.name).to eq(:little_hooman)
@@ -114,6 +114,19 @@ RSpec.describe SaboTabby::Mapper do
 
       it "is nil" do
         expect(mapper.type).to eq(nil)
+      end
+    end
+  end
+  describe ".key_transformation" do
+    let(:mapper) { CatMapper }
+
+    it "sets type" do
+      allow(CatMapper).to receive(:key_transformation).and_return(:camelize)
+      expect(mapper.key_transformation).to eq(:camelize)
+    end
+    context "not set" do
+      it "is nil" do
+        expect(mapper.key_transformation).to eq(nil)
       end
     end
   end
@@ -220,7 +233,6 @@ RSpec.describe SaboTabby::Mapper do
             hooman: {
               method: :hooman,
               cardinality: :one,
-              type: :people,
               links: {related: {}, self: {}}
             },
             sand_box: {method: :sand_box, cardinality: :one},

@@ -24,14 +24,14 @@ RSpec.describe SaboTabby::Error do
         .to eq(
           [
             {
-              detail: "Ooops Name must be filled",
-              status: "422",
-              title: "Validation error",
-              code: "3",
-              source: {pointer: "/data/origin"}
+              "detail" => "Ooops Name must be filled",
+              "status" => "422",
+              "title" => "Validation error",
+              "code" => "3",
+              "source" => {"pointer" => "/data/origin"}
             }
           ]
-      )
+        )
     end
     context "without source" do
       let(:error_mapper) { standard_error_mapper }
@@ -40,10 +40,10 @@ RSpec.describe SaboTabby::Error do
           .to eq(
             [
               {
-                detail: "Ooops User must exist.",
-                status: "400",
-                title: "Error",
-                code: "4"
+                "detail" => "Ooops User must exist.",
+                "status" => "400",
+                "title" => "Error",
+                "code" => "4"
               }
             ]
           )
@@ -80,12 +80,12 @@ RSpec.describe SaboTabby::Error do
   end
   describe "#code_value" do
     it "returns code value" do
-      expect(error.code_value(scope)).to eq(code: "3")
+      expect(error.code_value(scope)).to eq("code" => "3")
     end
     context "code is  nil" do
       let(:error_mapper) { WithoutBlockErrorMapper.new }
       it "returns code value" do
-        expect(error.code_value(scope)).to eq(code: "")
+        expect(error.code_value(scope)).to eq("code" => "")
       end
     end
   end

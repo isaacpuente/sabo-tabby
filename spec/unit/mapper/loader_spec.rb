@@ -6,7 +6,7 @@ require "sabo_tabby/mapper/standard_error"
 RSpec.describe SaboTabby::Mapper::Loader do
   include_context "test_data"
 
-  subject(:loader) { described_class.new(resource, resource_name, options) }
+  subject(:loader) { described_class.new(resource, options) }
   let(:options) { {include: [:hooman, :nap_spots], max_depth: 1} }
   let(:container) { SaboTabby::Container }
   let(:resource) { the_cat }
@@ -28,7 +28,7 @@ RSpec.describe SaboTabby::Mapper::Loader do
   describe "#initialize" do
     it "sets readers" do
       expect(loader.resource).to eq(resource)
-      expect(loader.resource_name).to eq(resource_name)
+      expect(loader.name).to eq(resource_name)
       expect(loader.options).to eq(options)
       expect(loader.mappers).to eq(loaded_mappers)
       expect(loader.resource_mapper).to eq(cat_mapper)
@@ -37,6 +37,7 @@ RSpec.describe SaboTabby::Mapper::Loader do
     end
     context "error" do
       let(:resource_name) { "standard_error" }
+      let(:resource) { StandardError.new("oops") }
       it "sets readers" do
         expect(loader.mappers).to eq({resource_name => standard_error_mapper})
         expect(loader.compound_paths).to eq([])
@@ -73,27 +74,17 @@ RSpec.describe SaboTabby::Mapper::Loader do
         end
       end
       context "error" do
-        subject(:loader) {
-          described_class.new(StandardError.new("oops"), standard_error_mapper.name.to_s, options)
-        }
+        let(:resource) { StandardError.new("oops") }
+
         context "through options" do
-          subject(:loader) {
-            described_class.new(the_cat, standard_error_mapper.name.to_s, options)
-          }
           let(:options) { {error: true} }
+
           it "loads error mappers" do
             expect(loader.mappers).to eq(loaded_error_mappers)
           end
         end
         context "through mapper name" do
-          subject(:loader) {
-            described_class.new(
-              StandardError.new("oops"),
-              validation_error_mapper.name.to_s,
-              options
-            )
-          }
-          let(:resource_name) { "validation_error" }
+          let(:resource) { ValidationError.new("oops") }
           before do
             container.stub("mappers.errors.validation_error", validation_error_mapper)
           end
@@ -126,9 +117,8 @@ RSpec.describe SaboTabby::Mapper::Loader do
   describe "#mapper" do
     context "error" do
       let(:options) { {error: true} }
-      subject(:loader) {
-        described_class.new(StandardError.new("oops"), standard_error_mapper.name.to_s, options)
-      }
+      let(:resource) { StandardError.new("oops") }
+
       it "returns error mapper" do
         expect(loader.mapper).to eq(standard_error_mapper)
       end
@@ -146,9 +136,7 @@ RSpec.describe SaboTabby::Mapper::Loader do
       end
     end
     context "resource name" do
-      subject(:loader) {
-        described_class.new(StandardError.new("oops"), standard_error_mapper.name.to_s, options)
-      }
+      let(:resource) { StandardError.new("oops") }
       it "is true" do
         expect(loader.error?).to be true
       end

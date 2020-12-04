@@ -8,7 +8,6 @@ require "sabo_tabby/mapper/settings"
 require "sabo_tabby/resource"
 require "sabo_tabby/relationship"
 require "sabo_tabby/link"
-require "sabo_tabby/helpers"
 
 module SaboTabby
   module Mapper
@@ -24,20 +23,16 @@ module SaboTabby
     module InstanceMethods
       def initialize
         klass = self.class
-        klass.settings.each do |key|
-          param_name = key.to_s.split("_")[1..].join("_").to_sym
-          name = param_name == :resource ? :name : param_name
-          klass.param name, default: proc {
-            case name
-            when :type
-              klass.send(key) || klass.send(:_resource)
-            when :attribute
-              next
-            else
-              klass.send(key)
-            end
-          }
-        end
+        klass.param :name, default: proc { klass.resource }
+        klass.param :links, default: proc { klass.links }
+        klass.param :meta, default: proc { klass.meta }
+        klass.param :resource_identifier, default: proc { klass.resource_identifier }
+        klass.param :key_transformation, default: proc { _key_transformation }
+        klass.param :attributes, default: proc { _attributes }
+        klass.param :dynamic_attributes, default: proc { _dynamic_attributes }
+        klass.param :key_name, default: proc { _key_name }
+        klass.param :relationships, default: proc { _relationships }
+        klass.param :type, default: proc { _type }
         super()
       end
 
@@ -47,15 +42,51 @@ module SaboTabby
         @resource = SaboTabby::Resource.new(self, options, mappers)
       end
 
-      def compound_relationships(mapper = self)
-        mapper.relationships
-          .select { |_rel_name, rel_opts| rel_opts.fetch(:include, false) }
+      def container
+        SaboTabby::Container
+      end
+
+      def inflector
+        @inflector ||= container[:inflector]
       end
 
       private
 
       def same_resource?(mappers, options)
         @resource && @resource.mappers == mappers && @resource.options == options
+      end
+
+      def _attributes
+        self.class.attributes.each_with_object({}) do |name, attrs|
+          attrs[name] = inflector.send(key_transformation, name)
+        end
+      end
+
+      def _dynamic_attributes
+        self.class.dynamic_attributes.each_with_object({}) do |(*names, block), attrs|
+          names.each { |name| attrs[name] = [inflector.send(key_transformation, name), block] }
+        end
+      end
+
+      def _type
+        self.class.type.nil? ? key_name : inflector.send(key_transformation, self.class.type)
+      end
+
+      def _key_name
+        inflector.send(key_transformation, name)
+      end
+
+      def _relationships
+        self.class.relationships.each_with_object({}) do |(name, opts), rels|
+          rels[name] = opts.merge(
+            key_name: inflector.send(key_transformation, name),
+            type: opts[:type] && inflector.send(key_transformation, opts[:type])
+          )
+        end
+      end
+
+      def _key_transformation
+        self.class.send(:key_transformation) || :underscore
       end
     end
 
@@ -90,12 +121,12 @@ module SaboTabby
         _setting(:type, name)
       end
 
-      def entity(name = Undefined)
-        _setting(:entity, name)
-      end
-
       def resource_identifier(id = :id)
         _setting(:resource_identifier, id, :id)
+      end
+
+      def key_transformation(name = Undefined)
+        _setting(:key_transformation, name)
       end
 
       def attributes(*attrs)
@@ -140,7 +171,8 @@ module SaboTabby
       private
 
       def dsl_methods
-        %i(links type resource_identifier attributes dynamic_attributes meta relationships entity)
+        %i(links type resource_identifier attributes dynamic_attributes
+           meta relationships key_transformation)
       end
 
       def container

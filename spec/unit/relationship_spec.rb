@@ -18,7 +18,7 @@ RSpec.describe SaboTabby::Relationship do
   describe "#call" do
     it "returns resource relationships for scope" do
       expect(relationship.(the_cat, **scope_settings))
-        .to eq(relationship_result[:relationships])
+        .to eq(relationship_result["relationships"])
     end
     context "no relationships" do
       let(:parent) { sand_box_mapper.resource }

@@ -19,7 +19,7 @@ module SaboTabby
 
     param :resource
     param :options, default: proc { _options }
-    param :loader, default: proc { Mapper::Loader.new(resource, name, **options) }
+    param :loader, default: proc { Mapper::Loader.new(resource, **options) }
     param :mappers, default: proc { loader.mappers }
 
     def_delegator :mapper_resource, :document
@@ -41,13 +41,13 @@ module SaboTabby
     def meta
       return {} unless options[:meta]
 
-      {meta: options[:meta]}
+      {"meta" => options[:meta]}
     end
 
     def links
-      return {} unless options[:url]
+      return {} if options.fetch(:skip_top_links, false) || options[:url].nil?
 
-      {links: {self: options[:url]}}
+      {"links" => {"self" => options[:url]}}
     end
 
     def compound_document
@@ -75,15 +75,15 @@ module SaboTabby
     private
 
     def error_document
-      {errors: Array(resource).flat_map { |r| document(r) }}
+      {"errors" => Array(resource).flat_map { |r| document(r) }}
     end
 
     def resource_document
       settings = loader.scope_settings
       if collection?
-        {data: resource.map { |r| document(r, **settings) }}
+        {"data" => resource.map { |r| document(r, **settings) }}
       else
-        {data: document(resource, **settings)}
+        {"data" => document(resource, **settings)}
       end.merge!(compound_document, paginate(meta, links))
     end
 
@@ -93,14 +93,10 @@ module SaboTabby
       @pagination = SaboTabby::Pagination.new(mappers, options)
         .then do |pagination|
           {
-            meta: meta.fetch(:meta, {}).merge!(pagination.meta),
-            links: links.fetch(:links, {}).merge!(pagination.links)
+            "meta" => meta.fetch("meta", {}).merge!(pagination.meta),
+            "links" => links.fetch("links", {}).merge!(pagination.links)
           }
         end
-    end
-
-    def container
-      SaboTabby::Container
     end
 
     def _options

@@ -33,6 +33,8 @@ class Role < BaseTestClass; end
 
 class Status < BaseTestClass; end
 
+class ValidationError < StandardError; end
+
 def new_asset(project, **data)
   Asset.new(
     id: data.fetch(:id, rand(1..100)),
@@ -159,22 +161,26 @@ RSpec.shared_context "test_data" do
       sand_box: nil
     ).tap { |cat| hooman.babies << cat }
   }
-  let(:attribute_result) { {age: 9, family: "Domestic", gender: "Ms. Le prr", name: "Nibbler"} }
+  let(:attribute_result) {
+    {"age" => 9, "family" => "Domestic", "gender" => "Ms. Le prr", "name" => "Nibbler"}
+  }
   let(:relationship_result) {
     {
-      relationships: {
-        hooman: {data: {id: "1", type: "people"}},
-        nap_spots: {data: [{id: "1", type: "nap_spot"}, {id: "2", type: "nap_spot"}]},
-        sand_box: {data: {id: "1", type: "sand_box"}}
+      "relationships" => {
+        "hooman" => {"data" => {"id" => "1", "type" => "people"}},
+        "nap_spots" => {"data" => [
+          {"id" => "1", "type" => "nap_spot"}, {"id" => "2", "type" => "nap_spot"}
+        ]},
+        "sand_box" => {"data" => {"id" => "1", "type" => "sand_box"}}
       }
     }
   }
-  let(:link_result) { {links: {}} }
+  let(:link_result) { {"links" => {}} }
   let(:resource_relationship) { instance_double("SaboTabby::Relationship") }
   let(:resource_attribute) { instance_double("SaboTabby::Attribute") }
   let(:resource_link) { instance_double("SaboTabby::Link") }
   let(:dynamic_attributes) {
-    [[:gender, proc { |value| value == :f ? "Ms. Le prr" : "Mr. Le prr" }]]
+    {gender: ["gender", proc { |value| value == :f ? "Ms. Le prr" : "Mr. Le prr" }]}
   }
   let(:options) { {} }
   let(:pager) {
@@ -245,7 +251,8 @@ RSpec.shared_context "test_data" do
           identifier: :id,
           method: :project,
           scope: :project,
-          type: :project
+          type: "project",
+          key_name: "project"
         },
         scope: :assets,
         tags: {
@@ -254,9 +261,11 @@ RSpec.shared_context "test_data" do
           include: true,
           method: :tags,
           scope: :tags,
-          type: :tag
+          type: "tag",
+          key_name: "tags"
         },
-        type: :asset
+        type: "asset",
+        key_name: "assets"
       },
       project_type: {
         as: :project_type,
@@ -265,7 +274,8 @@ RSpec.shared_context "test_data" do
         include: true,
         method: :type,
         scope: :type,
-        type: :project_type
+        type: "project_type",
+        key_name: "project_type"
       },
       tags: {
         cardinality: :many,
@@ -273,7 +283,8 @@ RSpec.shared_context "test_data" do
         include: true,
         method: :tags,
         scope: :tags,
-        type: :tag
+        type: "tag",
+        key_name: "tags"
       },
       users: {
         cardinality: :many,
@@ -286,7 +297,8 @@ RSpec.shared_context "test_data" do
           include: true,
           method: :projects,
           scope: :projects,
-          type: :project
+          type: "project",
+          key_name: "projects"
         },
         role: {
           cardinality: :one,
@@ -294,20 +306,22 @@ RSpec.shared_context "test_data" do
           include: true,
           method: :role,
           scope: :role,
-          type: :role
+          type: "role",
+          key_name: "role"
         },
         scope: :users,
-        type: :user
+        type: "user",
+        key_name: "users"
       }
     }
   }
   let(:max_depth) { 4 }
 
-
   let(:scope_settings_cat) {
     {
       as: :cats,
-      type: :cat,
+      type: "cat",
+      key_name: "cats",
       method: :babies,
       cardinality: :many,
       scope: :babies,
@@ -316,7 +330,8 @@ RSpec.shared_context "test_data" do
   }
   let(:scope_settings_hooman) {
     {
-      type: :people,
+      type: "people",
+      key_name: "hooman",
       method: :hooman,
       scope: :hooman,
       cardinality: :one,
@@ -333,13 +348,15 @@ RSpec.shared_context "test_data" do
       identifier: :id,
       method: :jobs,
       scope: :jobs,
-      type: :job
+      key_name: "jobs",
+      type: "job"
     }
   }
   let(:scope_settings_nap_spot) {
     {
       scope: :nap_spots,
-      type: :nap_spot,
+      key_name: "nap_spots",
+      type: "nap_spot",
       identifier: :spot_id,
       cardinality: :many,
       method: :nap_spots
@@ -348,7 +365,8 @@ RSpec.shared_context "test_data" do
   let(:scope_settings_sandbox) {
     {
       scope: :sand_box,
-      type: :sand_box,
+      key_name: "sand_box",
+      type: "sand_box",
       identifier: :id,
       cardinality: :one,
       method: :sand_box

@@ -23,7 +23,7 @@ module SaboTabby
 
         compound_paths
           .each_with_object([]) { |path, compound| compound.concat(document(scope, path)) }
-          .then { |compound| compound.any? ? {included: compound} : {} }
+          .then { |compound| compound.any? ? {"included" => compound} : {} }
       end
 
       private
@@ -81,10 +81,6 @@ module SaboTabby
 
       def mapper(scope_name, name)
         mappers[scope_name] || mappers[name]
-      end
-
-      def container
-        SaboTabby::Container
       end
     end
   end

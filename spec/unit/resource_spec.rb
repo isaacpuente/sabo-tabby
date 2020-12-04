@@ -27,10 +27,10 @@ RSpec.describe SaboTabby::Resource do
       .and_return(attribute_result)
     allow(resource_relationship)
       .to receive(:call)
-      .and_return(relationship_result[:relationships])
+      .and_return(relationship_result["relationships"])
     allow(resource_link)
       .to receive(:call)
-      .and_return(link_result[:links])
+      .and_return(link_result["links"])
   end
 
   describe "#initialize" do
@@ -62,7 +62,8 @@ RSpec.describe SaboTabby::Resource do
 
   describe "#identifier" do
     it "returns idetnifier hash" do
-      expect(resource.identifier(the_cat)).to eq(id: the_cat.id.to_s, type: cat_mapper.type.to_s)
+      expect(resource.identifier(the_cat))
+        .to eq("id" => the_cat.id.to_s, "type" => cat_mapper.type.to_s)
     end
   end
 
@@ -70,11 +71,11 @@ RSpec.describe SaboTabby::Resource do
     it "returns defined resource attributes hash" do
       expect(resource.attributes(the_cat))
         .to eq(
-          attributes: {
-            age: the_cat.age,
-            family: the_cat.family,
-            name: the_cat.name,
-            gender: "Ms. Le prr"
+          "attributes" => {
+            "age" => the_cat.age,
+            "family" => the_cat.family,
+            "name" => the_cat.name,
+            "gender" => "Ms. Le prr"
           }
         )
     end
@@ -84,14 +85,14 @@ RSpec.describe SaboTabby::Resource do
     it "returns resource document" do
       expect(resource.document(the_cat)).to eq(
         {
-          id: "2",
-          type: "cat",
-          meta: {code_name: :feline},
-          attributes: {
-            age: 9,
-            family: "Domestic",
-            gender: "Ms. Le prr",
-            name: "Nibbler"
+          "id" => "2",
+          "type" => "cat",
+          "meta" => {code_name: :feline},
+          "attributes" => {
+            "age" => 9,
+            "family" => "Domestic",
+            "gender" => "Ms. Le prr",
+            "name" => "Nibbler"
           }
         }.merge(relationship_result)
       )
@@ -113,7 +114,7 @@ RSpec.describe SaboTabby::Resource do
       end
     end
     it "returns resource meta object" do
-      expect(resource.meta).to eq(meta: {code_name: :feline})
+      expect(resource.meta).to eq("meta" => {code_name: :feline})
     end
   end
 end

@@ -21,9 +21,9 @@ module SaboTabby
       origins = Array(mapper.origin.(scope))
       detail(scope).map.with_index { |error, index|
         {
-          status: String(status(scope)),
-          title: title(scope),
-          detail: error
+          "status" => String(status(scope)),
+          "title" => title(scope),
+          "detail" => error
         }.merge!(
           code_value(scope),
           source(origins[index])
@@ -46,14 +46,14 @@ module SaboTabby
     def source(origin)
       return {} if origin.nil?
 
-      {source: {pointer: origin}}
+      {"source" => {"pointer" => origin}}
     end
 
     def code_value(scope)
       value = code(scope)
-      return {code: ""} if value.nil?
+      return {"code" => ""} if value.nil?
 
-      {code: String(value)}
+      {"code" => String(value)}
     end
   end
 end

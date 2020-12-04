@@ -3,13 +3,16 @@
 # auto_register: false
 
 require "dry-initializer"
+require "sabo_tabby/helpers"
 
 module SaboTabby
   class Relationship
     extend Dry::Initializer
+    include Helpers
 
     param :parent
     param :parent_mapper, default: proc { parent.mapper }
+    param :parent_options, default: proc { parent.options }
     param :mappers, default: proc { parent.mappers }
 
     def call(scope, **scope_settings)
@@ -24,7 +27,7 @@ module SaboTabby
       mapper_rel_keys = parent_mapper.relationships.keys
       scope_settings
         .select { |k, _v| mapper_rel_keys.include?(k) }
-        .each_with_object({}) do |(name, settings), result|
+        .each_with_object({}) do |(_name, settings), result|
           rel = send(
             settings[:cardinality],
             relationship_scope(scope, settings[:scope]),
@@ -32,7 +35,8 @@ module SaboTabby
           )
           next if rel.nil? || rel.empty?
 
-          result[name] = {data: rel}.merge!(links(scope, **settings))
+          result[settings[:key_name]] = {"data" => rel}
+            .merge!(links(scope, **settings))
         end
     end
 
@@ -48,7 +52,7 @@ module SaboTabby
     def one(scope, **settings)
       return {} if scope.nil?
 
-      {type: settings[:type].to_s, id: scope.send(settings[:identifier]).to_s}
+      {"type" => settings[:type], "id" => scope.send(settings[:identifier]).to_s}
     end
 
     def many(scope, **settings)

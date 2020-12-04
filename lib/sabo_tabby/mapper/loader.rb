@@ -3,18 +3,20 @@
 # auto_register: false
 
 require "dry-initializer"
+require "sabo_tabby/helpers"
 
 module SaboTabby
   module Mapper
     class Loader
       extend Dry::Initializer
+      include Helpers
 
       param :resource
-      param :resource_name
       param :options, default: proc { EMPTY_HASH }
+      param :name, default: proc { resource_name(resource) }
       param :resource_mapper, default: proc { mapper }
       param :mappers, default: proc {
-        {inflector.singularize(resource_name) => resource_mapper}.tap do |mprs|
+        {inflector.singularize(name) => resource_mapper}.tap do |mprs|
           next if error?
 
           mprs.merge!(relationship_mappers)
@@ -38,13 +40,13 @@ module SaboTabby
       }
 
       def mapper
-        return error_mapper(resource_name) if error?
+        return error_mapper(name) if error?
 
-        container["mappers.#{resource_name}"]
+        container["mappers.#{name}"]
       end
 
       def error?
-        options[:error] || String(resource_name).downcase.include?("error")
+        options[:error] || String(name).downcase.include?("error")
       end
 
       private
@@ -137,11 +139,13 @@ module SaboTabby
       end
 
       def setting_entry(scope, mapper, scope_name, depth, **relationship_opts)
+        rel_type = relationship_opts[:type]
+        type = rel_type ? inflector.send(mapper.key_transformation, rel_type) : mapper.type
         relationship_opts
           .merge(
             {
               scope: scope_name,
-              type: relationship_opts.fetch(:type, mapper.type),
+              type: type,
               identifier: mapper.resource_identifier
             },
             _scope_settings(
@@ -150,14 +154,6 @@ module SaboTabby
               depth + 1
             )
           )
-      end
-
-      def container
-        SaboTabby::Container
-      end
-
-      def inflector
-        @inflector ||= container[:inflector]
       end
     end
   end

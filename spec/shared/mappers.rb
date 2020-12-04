@@ -92,7 +92,7 @@ class CatMapper
       resource.age / 2
     end
     relationships do
-      one :hooman, type: :people, links: {
+      one :hooman, links: {
         self: {},
         related: {}
       }
@@ -151,6 +151,15 @@ class JobMapper
   end
 end
 
+class MapperWithKeyTransformation
+  include SaboTabby::Mapper
+
+  resource :sabo_tabby do
+    attributes :name, :version
+    key_transformation :camelize
+  end
+end
+
 class EmptyMapper
   include SaboTabby::Mapper
 end
@@ -201,17 +210,19 @@ class WithoutArgPaginationMapper
 end
 
 RSpec.shared_context "mappers" do
+  let(:key_transformation) { "underscore" }
   let(:cat_mapper) {
     instance_double(
       "CatMapper",
       name: :cat,
+      key_name: "cat",
       resource_identifier: :id,
-      type: :cat,
-      attributes: %i(name age family),
+      type: "cat",
+      attributes: {name: "name", age: "age", family: "family"},
       meta: {code_name: :feline},
       dynamic_attributes: dynamic_attributes,
       relationships: cat_mapper_relationships,
-      compound_relationships: {},
+      key_transformation: key_transformation,
       resource: instance_double(
         "SaboTabby::Resource",
         document_id: "cat_1",
@@ -223,12 +234,13 @@ RSpec.shared_context "mappers" do
     instance_double(
       "HoomanMapper",
       name: :hooman,
-      type: :people,
-      attributes: %i(name),
+      key_name: "hooman",
+      type: "people",
+      attributes: {name: "name"},
       resource_identifier: :id,
       meta: {},
       relationships: hooman_mapper_relationships,
-      compound_relationships: {},
+      key_transformation: key_transformation,
       resource: instance_double(
         "SaboTabby::Resource",
         document_id: "people_1",
@@ -240,12 +252,13 @@ RSpec.shared_context "mappers" do
     instance_double(
       "JobMapper",
       name: :job,
-      type: :job,
-      attributes: %i(name),
+      key_name: "job",
+      type: "job",
+      attributes: {name: "name"},
       resource_identifier: :id,
+      key_transformation: key_transformation,
       meta: {},
       relationships: job_mapper_relationships,
-      compound_relationships: {},
       resource: instance_double(
         "SaboTabby::Resource",
         document_id: "job_1",
@@ -257,12 +270,13 @@ RSpec.shared_context "mappers" do
     instance_double(
       "NapSpotMapper",
       name: :nap_spots,
-      type: :nap_spot,
-      attributes: %i(name),
+      key_name: "nap_spots",
+      type: "nap_spot",
+      attributes: {name: "name"},
       meta: {if_i_fits: :i_sits},
       resource_identifier: :spot_id,
       relationships: nap_spot_mapper_relationships,
-      compound_relationships: {},
+      key_transformation: key_transformation,
       resource: instance_double(
         "SaboTabby::Resource",
         document_id: "nap_spot_1",
@@ -274,38 +288,51 @@ RSpec.shared_context "mappers" do
     instance_double(
       "SandBoxMapper",
       name: :sand_box,
-      type: :sand_box,
-      attributes: [],
+      key_name: "sand_box",
+      type: "sand_box",
+      attributes: {},
       meta: {},
       resource_identifier: :id,
+      key_transformation: key_transformation,
       resource: instance_double(
         "SaboTabby::Resource",
         document_id: "sand_box_1",
         type: "sand_box"
       ),
-      compound_relationships: {},
       relationships: sand_box_mapper_relationships
     )
   }
   let(:cat_mapper_relationships) {
     {
-      hooman: {method: :hooman, cardinality: :one, links: {self: {}, related: {}}},
-      sand_box: {method: :sand_box, cardinality: :one},
-      nap_spots: {method: :nap_spots, cardinality: :many}
+      hooman: {
+        method: :hooman,
+        cardinality: :one,
+        links: {self: {}, related: {}},
+        key_name: "hooman",
+        type: nil
+      },
+      sand_box: {method: :sand_box, cardinality: :one, key_name: "sand_box", type: nil},
+      nap_spots: {method: :nap_spots, cardinality: :many, key_name: "nap_spots", type: nil}
     }
   }
   let(:hooman_mapper_relationships) {
     {
-      baby: {as: :cats, method: :babies, cardinality: :many, type: :cat},
-      jobs: {method: :jobs, cardinality: :many},
-      nap_spots: {method: :nap_spots, cardinality: :many}
+      baby: {
+        as: :cats,
+        method: :babies,
+        cardinality: :many,
+        key_name: "cats",
+        type: "cat"
+      },
+      jobs: {method: :jobs, cardinality: :many, key_name: "jobs", type: nil},
+      nap_spots: {method: :nap_spots, cardinality: :many, key_name: "nap_spots", type: nil}
     }
   }
   let(:job_mapper_relationships) {
-    {cat: {method: :cat, cardinality: :one}}
+    {cat: {method: :cat, cardinality: :one, key_name: "cat", type: nil}}
   }
   let(:nap_spot_mapper_relationships) {
-    {cat: {method: :cat, cardinality: :one}}
+    {cat: {method: :cat, cardinality: :one, key_name: "cat, type: nil"}}
   }
   let(:sand_box_mapper_relationships) { {} }
   let(:loaded_mappers) {

@@ -31,19 +31,19 @@ RSpec.describe SaboTabby::Document::Compound do
         receive(:resource).with(mappers: mappers, **options).and_return(hooman_mapper_resource)
       )
       allow(hooman_mapper_resource).to(
-        receive(:document).with(hooman, **scope_settings[:hooman]).and_return(compound_document[:hooman])
+        receive(:document).with(hooman, **scope_settings[:hooman]).and_return(compound_document["hooman"])
       )
       allow(nap_spot_mapper).to(
         receive(:resource).with(mappers: mappers, **options).and_return(nap_spot_mapper_resource)
       )
       allow(nap_spot_mapper_resource).to(
-        receive(:document).with(nap_spots[0], **scope_settings[:nap_spots]).and_return(compound_document[:nap_spot][0])
+        receive(:document).with(nap_spots[0], **scope_settings[:nap_spots]).and_return(compound_document["nap_spot"][0])
       )
       allow(nap_spot_mapper_resource).to(
         receive(:document_id).with(nap_spots[0]).and_return("nap_spot_1")
       )
       allow(nap_spot_mapper_resource).to(
-        receive(:document).with(nap_spots[1], **scope_settings[:nap_spots]).and_return(compound_document[:nap_spot][1])
+        receive(:document).with(nap_spots[1], **scope_settings[:nap_spots]).and_return(compound_document["nap_spot"][1])
       )
       allow(nap_spot_mapper_resource).to(
         receive(:document_id).with(nap_spots[1]).and_return("nap_spot_2")
@@ -51,33 +51,33 @@ RSpec.describe SaboTabby::Document::Compound do
     end
     let(:compound_document) {
       {
-        hooman: {
-          id: "1",
-          type: "people",
-          attributes: {
-            name: hooman.name
+        "hooman" => {
+          "id" => "1",
+          "type" => "people",
+          "attributes" => {
+            "name" => hooman.name
           }
         },
-        nap_spot: [
+        "nap_spot" => [
           {
-            id: "1",
-            type: "nap_spot",
-            attributes: {
-              name: nap_spots[0].name
+            "id" => "1",
+            "type" => "nap_spot",
+            "attributes" => {
+              "name" => nap_spots[0].name
             }
           },
           {
-            id: "2",
-            type: "nap_spot",
-            attributes: {
-              name: nap_spots[1].name
+            "id" => "2",
+            "type" => "nap_spot",
+            "attributes" => {
+              "name" => nap_spots[1].name
             }
           },
           {
-            id: "3",
-            type: "nap_spot",
-            attributes: {
-              name: nap_spots[2].name
+            "id" => "3",
+            "type" => "nap_spot",
+            "attributes" => {
+              "name" => nap_spots[2].name
             }
           }
         ]
@@ -102,10 +102,10 @@ RSpec.describe SaboTabby::Document::Compound do
       it "returns compound document" do
         expect(compound.(scope))
           .to eq(
-            included: [
-              compound_document[:hooman],
-              compound_document[:nap_spot][0],
-              compound_document[:nap_spot][1]
+            "included" => [
+              compound_document["hooman"],
+              compound_document["nap_spot"][0],
+              compound_document["nap_spot"][1]
             ]
           )
       end
@@ -145,10 +145,10 @@ RSpec.describe SaboTabby::Document::Compound do
       }
       before do
         allow(hooman_mapper_resource).to(
-          receive(:document).with(hooman, **settings[:hooman]).and_return(compound_document[:hooman])
+          receive(:document).with(hooman, **settings[:hooman]).and_return(compound_document["hooman"])
         )
         allow(nap_spot_mapper_resource).to(
-          receive(:document).with(nap_spots[2], **scope_settings[:nap_spots]).and_return(compound_document[:nap_spot][2])
+          receive(:document).with(nap_spots[2], **scope_settings[:nap_spots]).and_return(compound_document["nap_spot"][2])
         )
         allow(nap_spot_mapper_resource).to(
           receive(:document_id).with(nap_spots[2]).and_return("nap_spot_3")
@@ -157,11 +157,11 @@ RSpec.describe SaboTabby::Document::Compound do
       it "returns compound document" do
         expect(compound.(scope))
           .to eq(
-            included: [
-              compound_document[:hooman],
-              compound_document[:nap_spot][2],
-              compound_document[:nap_spot][0],
-              compound_document[:nap_spot][1]
+            "included" => [
+              compound_document["hooman"],
+              compound_document["nap_spot"][2],
+              compound_document["nap_spot"][0],
+              compound_document["nap_spot"][1]
             ]
           )
       end

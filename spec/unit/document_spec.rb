@@ -26,8 +26,8 @@ RSpec.describe SaboTabby::Document do
   let(:with_pagination) {
     instance_double("SaboTabby::Pagination", meta: pagination_meta, links: pagination_links)
   }
-  let(:pagination_meta) { {total: 32, pages: 2} }
-  let(:pagination_links) { {self: "", last: "", prev: "", next: ""} }
+  let(:pagination_meta) { {"total" => 32, "pages" => 2} }
+  let(:pagination_links) { {"self" => "", "last" => "", "prev" => "", "next" => ""} }
   let(:default_pagination) { instance_double("SaboTabby::Mapper::DefaultPagination") }
   let(:compound_document_class) {
     class_double("SaboTabby::Document::Compound", new: compound_document)
@@ -37,19 +37,19 @@ RSpec.describe SaboTabby::Document do
       "SaboTabby::Document::Compound",
       mappers: mappers,
       options: options,
-      call: {included: included}
+      call: {"included" => included}
     )
   }
   let(:data) {
     {
-      id: "1",
-      type: "cat",
-      attributes: {
-        name: "Nibbler"
+      "id" => "1",
+      "type" => "cat",
+      "attributes" => {
+        "name" => "Nibbler"
       }
     }
   }
-  let(:included) { [{id: "3", type: "people"}, {id: "1", type: "nap_spot"}] }
+  let(:included) { [{"id" => "3", "type" => "people"}, {"id" => "1", "type" => "nap_spot"}] }
 
   before do
     stub_const("SaboTabby::Document::Compound", compound_document_class) if options[:include]
@@ -72,9 +72,9 @@ RSpec.describe SaboTabby::Document do
   describe "#call" do
     before do
       allow(cat_mapper.resource)
-        .to receive(:document).with(resource).and_return(resource_document[:data])
+        .to receive(:document).with(resource).and_return(resource_document["data"])
     end
-    let(:resource_document) { {data: data} }
+    let(:resource_document) { {"data" => data} }
 
     it "returns jsonapi resource document" do
       expect(document.call).to eq(resource_document)
@@ -82,10 +82,10 @@ RSpec.describe SaboTabby::Document do
     context "collection" do
       before do
         allow(cat_mapper.resource)
-          .to receive(:document).with(resource.first).and_return(resource_document[:data].first)
+          .to receive(:document).with(resource.first).and_return(resource_document["data"].first)
       end
       let(:resource) { [the_cat] }
-      let(:resource_document) { {data: [data]} }
+      let(:resource_document) { {"data" => [data]} }
 
       it "returns jsonapi resource document" do
         expect(document.call).to eq(resource_document)
@@ -94,7 +94,7 @@ RSpec.describe SaboTabby::Document do
         let(:options) { {pager: double("Pager")} }
         it "returns jsonapi resource document with links and meta" do
           expect(document.call)
-            .to eq(resource_document.merge(meta: pagination_meta, links: pagination_links))
+            .to eq(resource_document.merge("meta" => pagination_meta, "links" => pagination_links))
         end
       end
     end
@@ -102,12 +102,12 @@ RSpec.describe SaboTabby::Document do
       let(:options) { {meta: {run_by: :cats}} }
 
       it "returns jsonapi resource with meta object" do
-        expect(document.call).to eq(resource_document.merge(meta: {run_by: :cats}))
+        expect(document.call).to eq(resource_document.merge("meta" => {run_by: :cats}))
       end
     end
     context "compound" do
       let(:options) { {include: %i(hooman nap_spot)} }
-      let(:resource_document) { {data: [data], included: included} }
+      let(:resource_document) { {"data" => [data], "included" => included} }
 
       it "returns jsonapi resource with included object" do
         expect(document.call).to eq(resource_document)
@@ -116,11 +116,11 @@ RSpec.describe SaboTabby::Document do
     context "error" do
       before do
         allow(standard_error_mapper.resource)
-          .to receive(:document).with(resource).and_return(error_document[:errors].first)
+          .to receive(:document).with(resource).and_return(error_document["errors"].first)
       end
 
       let(:mappers) { {standard_error_mapper.name.to_s => standard_error_mapper} }
-      let(:error_document) { {errors: [{status: "400", message: "oops", title: "Error"}]} }
+      let(:error_document) { {"errors" => [{"status" => "400", "message" => "oops", "title" => "Error"}]} }
       let(:resource) { StandardError.new("oops") }
 
       context "through options" do
@@ -166,7 +166,7 @@ RSpec.describe SaboTabby::Document do
     let(:options) { {meta: {everybody: :wants_to_be_a_cat}} }
 
     it "returns document's meta object" do
-      expect(document.meta).to eq(options)
+      expect(document.meta).to eq("meta" => options[:meta])
     end
     context "no meta option" do
       let(:options) { {} }
@@ -185,7 +185,7 @@ RSpec.describe SaboTabby::Document do
       document.compound_document
     end
     it "returns compound document" do
-      expect(document.compound_document).to eq(included: included)
+      expect(document.compound_document).to eq("included" => included)
     end
     context "no include option" do
       let(:options) { {} }

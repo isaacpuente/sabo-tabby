@@ -5,13 +5,12 @@ require "sabo_tabby/mapper/loader"
 RSpec.describe SaboTabby::Mapper::Loader do
   include_context "test_data"
 
-  subject(:loader) { described_class.new(resource, resource_name, options) }
+  subject(:loader) { described_class.new(resource, options) }
 
   let(:options) { {} }
   let(:container) { SaboTabby::Container }
   let(:resource) { the_cat }
   let(:resource_mapper) { CatMapper.new }
-  let(:resource_name) { resource_mapper.name.to_s }
   let(:const) {
     -> key {  Object.const_get("#{key.split("_").map(&:capitalize).join("")}Mapper") }
   }

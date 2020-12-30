@@ -45,7 +45,7 @@ module SaboTabby
     end
 
     def links
-      return {} if options.fetch(:skip_top_links, false) || options[:url].nil?
+      return {} if options.fetch(:skip_root_links, false) || options[:url].nil?
 
       {"links" => {"self" => options[:url]}}
     end

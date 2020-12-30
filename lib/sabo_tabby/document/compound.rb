@@ -62,7 +62,13 @@ module SaboTabby
       def compound_scope(scope, **settings)
         return [] if settings.empty?
 
-        Array(scope).flat_map { |sco| sco.send(settings[:scope]) }
+        Array(scope).flat_map do |sco|
+          next if sco.nil?
+
+          sco.send(settings[:scope]).then do |s|
+            s.is_a?(Integer) ? [] : s
+          end
+        end
       end
 
       def resource_document(scope, name, **settings)

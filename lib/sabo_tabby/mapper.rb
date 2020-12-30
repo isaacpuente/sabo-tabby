@@ -104,8 +104,6 @@ module SaboTabby
       end
 
       def links(*args, &block)
-        # links :self do |url, resource_name, resource|
-        # end
         type, name = args
 
         params = type ? {type => [name, block]} : {}

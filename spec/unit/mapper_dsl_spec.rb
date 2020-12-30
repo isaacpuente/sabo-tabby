@@ -233,7 +233,7 @@ RSpec.describe SaboTabby::Mapper do
             hooman: {
               method: :hooman,
               cardinality: :one,
-              links: {related: {}, self: {}}
+              links: {related: "cats/%{resource_id}/mah-man", self: "cats/%{resource_id}/relationships/mah-man"}
             },
             sand_box: {method: :sand_box, cardinality: :one},
             nap_spots: {method: :nap_spots, cardinality: :many}
@@ -256,7 +256,13 @@ RSpec.describe SaboTabby::Mapper do
         context "as option" do
           it "sets singularized as option value as key and original as 'as' option" do
             expect(mapper.relationships).to eq(
-              cats: {as: :cats, method: :babies, cardinality: :many, type: :cat},
+              cats: {
+                as: :cats,
+                method: :babies,
+                cardinality: :many,
+                type: :cat,
+                links: {related: "%{resource_link}/cats", self: "%{resource_link}/relationships/cats"}
+              },
               jobs: {cardinality: :many, method: :jobs},
               nap_spots: {method: :nap_spots, cardinality: :many}
             )

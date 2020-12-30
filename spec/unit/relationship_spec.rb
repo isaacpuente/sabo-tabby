@@ -16,6 +16,10 @@ RSpec.describe SaboTabby::Relationship do
     end
   end
   describe "#call" do
+    before do
+      allow(cat_link).to receive(:for_relationship)
+        .and_return(hooman_link.for_relationship(the_cat), {}, {}, {})
+    end
     it "returns resource relationships for scope" do
       expect(relationship.(the_cat, **scope_settings))
         .to eq(relationship_result["relationships"])

@@ -15,7 +15,10 @@ class ProjectMapper
     links :self, :projects
     relationships do
       one :type, as: :project_type, include: true
-      many :users, include: true
+      many :users, include: true, links: {
+        self: "%{resource_link}/relationships/users",
+        related: "%{resource_link}/users"
+      }
       many :assets, include: true
       many :tags, include: true
     end
@@ -93,8 +96,8 @@ class CatMapper
     end
     relationships do
       one :hooman, links: {
-        self: {},
-        related: {}
+        self: "cats/%{resource_id}/relationships/mah-man",
+        related: "cats/%{resource_id}/mah-man"
       }
       one :sand_box
       many :nap_spots
@@ -129,7 +132,10 @@ class HoomanMapper
     type :people
     attributes :name
     relationships do
-      many :babies, as: :cats, type: :cat
+      many :babies, as: :cats, type: :cat, links: {
+        self: "%{resource_link}/relationships/cats",
+        related: "%{resource_link}/cats"
+      }
       many :nap_spots
       many :jobs
     end
@@ -223,10 +229,12 @@ RSpec.shared_context "mappers" do
       dynamic_attributes: dynamic_attributes,
       relationships: cat_mapper_relationships,
       key_transformation: key_transformation,
+      links: {"self" => ["cats", nil]},
       resource: instance_double(
         "SaboTabby::Resource",
         document_id: "cat_1",
-        type: "cat"
+        type: "cat",
+        link: cat_link
       )
     )
   }
@@ -241,10 +249,12 @@ RSpec.shared_context "mappers" do
       meta: {},
       relationships: hooman_mapper_relationships,
       key_transformation: key_transformation,
+      links: {"self" => ["hoomans", nil]},
       resource: instance_double(
         "SaboTabby::Resource",
         document_id: "people_1",
-        type: "people"
+        type: "people",
+        link: hooman_link
       )
     )
   }
@@ -262,7 +272,8 @@ RSpec.shared_context "mappers" do
       resource: instance_double(
         "SaboTabby::Resource",
         document_id: "job_1",
-        type: "job"
+        type: "job",
+        link: resource_link
       )
     )
   }
@@ -276,11 +287,13 @@ RSpec.shared_context "mappers" do
       meta: {if_i_fits: :i_sits},
       resource_identifier: :spot_id,
       relationships: nap_spot_mapper_relationships,
+      links: {"self" => ["nap-spots", nil]},
       key_transformation: key_transformation,
       resource: instance_double(
         "SaboTabby::Resource",
         document_id: "nap_spot_1",
-        type: "nap_spot"
+        type: "nap_spot",
+        link: nap_spot_link
       )
     )
   }
@@ -297,7 +310,8 @@ RSpec.shared_context "mappers" do
       resource: instance_double(
         "SaboTabby::Resource",
         document_id: "sand_box_1",
-        type: "sand_box"
+        type: "sand_box",
+        link: resource_link
       ),
       relationships: sand_box_mapper_relationships
     )
@@ -307,7 +321,7 @@ RSpec.shared_context "mappers" do
       hooman: {
         method: :hooman,
         cardinality: :one,
-        links: {self: {}, related: {}},
+        links: {related: "cats/%{resource_id}/mah-man", self: "cats/%{resource_id}/relationships/mah-man"},
         key_name: "hooman",
         type: nil
       },
@@ -322,7 +336,8 @@ RSpec.shared_context "mappers" do
         method: :babies,
         cardinality: :many,
         key_name: "cats",
-        type: "cat"
+        type: "cat",
+        links: {related: "%{resource_link}/cats", self: "%{resource_link}/relationships/cats"}
       },
       jobs: {method: :jobs, cardinality: :many, key_name: "jobs", type: nil},
       nap_spots: {method: :nap_spots, cardinality: :many, key_name: "nap_spots", type: nil}

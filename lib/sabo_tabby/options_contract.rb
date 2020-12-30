@@ -17,7 +17,7 @@ module SaboTabby
       optional(:include).value(Types::QueryStringArray)
       optional(:fields).type(Types::Hash.map(Types::String, Types::QueryStringArray))
       optional(:url).filled(:string)
-      optional(:skip_top_links).filled(:bool)
+      optional(:skip_root_links).filled(:bool)
       optional(:meta).hash
       optional(:pager_klass).filled(:string)
       optional(:pager)

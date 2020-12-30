@@ -73,7 +73,6 @@ def new_user(**data)
 end
 
 RSpec.shared_context "test_data" do
-  include_context "mappers"
 
   let(:project_types) {
     [ProjectType.new(id: 1, name: "External"), ProjectType.new(id: 2, name: "Internal")]
@@ -167,7 +166,7 @@ RSpec.shared_context "test_data" do
   let(:relationship_result) {
     {
       "relationships" => {
-        "hooman" => {"data" => {"id" => "1", "type" => "people"}},
+        "hooman" => {"data" => {"id" => "1", "type" => "people"}, "links" => hooman_link.for_relationship(the_cat)},
         "nap_spots" => {"data" => [
           {"id" => "1", "type" => "nap_spot"}, {"id" => "2", "type" => "nap_spot"}
         ]},
@@ -175,10 +174,48 @@ RSpec.shared_context "test_data" do
       }
     }
   }
+  let(:host) { "http://localhost" }
   let(:link_result) { {"links" => {}} }
   let(:resource_relationship) { instance_double("SaboTabby::Relationship") }
   let(:resource_attribute) { instance_double("SaboTabby::Attribute") }
   let(:resource_link) { instance_double("SaboTabby::Link") }
+  let(:cat_link) {
+    instance_double(
+      "SaboTabby::Link",
+      for_resource: {},
+      for_relationship: {
+        "related" => "#{host}/hoomens/hoomen-1/cats",
+        "self" => "#{host}/hoomens/hoomen-1/relationships/cats"
+      }
+    )
+  }
+  let(:hooman_link) {
+    instance_double(
+      "SaboTabby::Link",
+      for_resource: {"self" => "#{host}/hoomen/hoomen-1"},
+      for_relationship: {
+        "related" => "#{host}/cats/#{the_cat.id}/mah-man",
+        "self" => "#{host}/cats/#{the_cat.id}/relationships/mah-man"
+      }
+    )
+  }
+  let(:nap_spot_link) {
+    instance_double(
+      "SaboTabby::Link",
+      for_resource: {"self" => "#{host}/nap-spots/1"},
+      for_relationship: {}
+    )
+  }
+  let(:user_link) {
+    instance_double(
+      "SaboTabby::Link",
+      for_resource: {},
+      for_relationship: {
+        "related" => "#{host}/projects/1/users",
+        "self" => "#{host}/projects/1/relationships/users"
+      }
+    )
+  }
   let(:dynamic_attributes) {
     {gender: ["gender", proc { |value| value == :f ? "Ms. Le prr" : "Mr. Le prr" }]}
   }
@@ -245,10 +282,12 @@ RSpec.shared_context "test_data" do
         cardinality: :many,
         identifier: :id,
         include: true,
+        mapper_name: "asset",
         method: :assets,
         project: {
           cardinality: :one,
           identifier: :id,
+          mapper_name: "project",
           method: :project,
           scope: :project,
           type: "project",
@@ -259,6 +298,7 @@ RSpec.shared_context "test_data" do
           cardinality: :many,
           identifier: :id,
           include: true,
+          mapper_name: "tag",
           method: :tags,
           scope: :tags,
           type: "tag",
@@ -272,6 +312,7 @@ RSpec.shared_context "test_data" do
         cardinality: :one,
         identifier: :id,
         include: true,
+        mapper_name: "project_type",
         method: :type,
         scope: :type,
         type: "project_type",
@@ -281,6 +322,7 @@ RSpec.shared_context "test_data" do
         cardinality: :many,
         identifier: :id,
         include: true,
+        mapper_name: "tag",
         method: :tags,
         scope: :tags,
         type: "tag",
@@ -290,11 +332,14 @@ RSpec.shared_context "test_data" do
         cardinality: :many,
         identifier: :id,
         include: true,
+        links: {related: "%{resource_link}/users", self: "%{resource_link}/relationships/users"},
+        mapper_name: "user",
         method: :users,
         projects: {
           cardinality: :many,
           identifier: :id,
           include: true,
+          mapper_name: "project",
           method: :projects,
           scope: :projects,
           type: "project",
@@ -304,6 +349,7 @@ RSpec.shared_context "test_data" do
           cardinality: :one,
           identifier: :id,
           include: true,
+          mapper_name: "role",
           method: :role,
           scope: :role,
           type: "role",
@@ -317,6 +363,7 @@ RSpec.shared_context "test_data" do
   }
   let(:max_depth) { 4 }
 
+
   let(:scope_settings_cat) {
     {
       as: :cats,
@@ -325,7 +372,9 @@ RSpec.shared_context "test_data" do
       method: :babies,
       cardinality: :many,
       scope: :babies,
-      identifier: :id
+      identifier: :id,
+      mapper_name: "cat",
+      links: {related: "%{resource_link}/cats", self: "%{resource_link}/relationships/cats"},
     }
   }
   let(:scope_settings_hooman) {
@@ -336,10 +385,8 @@ RSpec.shared_context "test_data" do
       scope: :hooman,
       cardinality: :one,
       identifier: :id,
-      links: {
-        related: {},
-        self: {}
-      }
+      links: {self: "cats/%{resource_id}/relationships/mah-man", related: "cats/%{resource_id}/mah-man"},
+      mapper_name: "hooman"
     }
   }
   let(:scope_settings_job) {
@@ -349,7 +396,8 @@ RSpec.shared_context "test_data" do
       method: :jobs,
       scope: :jobs,
       key_name: "jobs",
-      type: "job"
+      type: "job",
+      mapper_name: "job"
     }
   }
   let(:scope_settings_nap_spot) {
@@ -359,7 +407,8 @@ RSpec.shared_context "test_data" do
       type: "nap_spot",
       identifier: :spot_id,
       cardinality: :many,
-      method: :nap_spots
+      method: :nap_spots,
+      mapper_name: "nap_spot"
     }
   }
   let(:scope_settings_sandbox) {
@@ -369,7 +418,10 @@ RSpec.shared_context "test_data" do
       type: "sand_box",
       identifier: :id,
       cardinality: :one,
-      method: :sand_box
+      method: :sand_box,
+      mapper_name: "sand_box"
     }
   }
+
+  include_context "mappers"
 end

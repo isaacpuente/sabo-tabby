@@ -66,7 +66,7 @@ module SaboTabby
 
     def links(scope)
       link
-        .call(scope)
+        .for_resource(scope)
         .then { |result| result.any? ? {"links" => result} : {} }
     end
 

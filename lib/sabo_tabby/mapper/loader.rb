@@ -130,7 +130,7 @@ module SaboTabby
 
           next if depth > options.fetch(:max_depth, 1) || rel_scope_name.nil? || mapper.nil?
 
-          result[rel_name] = setting_entry(scope, mapper, rel_scope_name, depth, **opts)
+          result[rel_name] = setting_entry(scope, rel_scope_name, mapper, mapper_name, depth, **opts)
         end
       end
 
@@ -138,13 +138,14 @@ module SaboTabby
         scope.nil? || (scope.is_a?(Array) && scope.empty?)
       end
 
-      def setting_entry(scope, mapper, scope_name, depth, **relationship_opts)
+      def setting_entry(scope, scope_name, mapper, mapper_name, depth, **relationship_opts)
         rel_type = relationship_opts[:type]
         type = rel_type ? inflector.send(mapper.key_transformation, rel_type) : mapper.type
         relationship_opts
           .merge(
             {
               scope: scope_name,
+              mapper_name: mapper_name,
               type: type,
               identifier: mapper.resource_identifier
             },

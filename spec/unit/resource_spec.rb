@@ -29,7 +29,7 @@ RSpec.describe SaboTabby::Resource do
       .to receive(:call)
       .and_return(relationship_result["relationships"])
     allow(resource_link)
-      .to receive(:call)
+      .to receive(:for_resource)
       .and_return(link_result["links"])
   end
 

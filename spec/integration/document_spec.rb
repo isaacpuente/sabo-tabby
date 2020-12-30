@@ -8,7 +8,8 @@ RSpec.describe SaboTabby::Document do
   subject(:document) { described_class.new(resource, options) }
 
   let(:resource) { the_cat }
-  let(:options) { {} }
+  let(:options) { url_options }
+  let(:url_options) { {url: host, skip_root_links: "true"} }
 
   describe "#call" do
     context "resource object" do
@@ -44,7 +45,14 @@ RSpec.describe SaboTabby::Document do
                 "name" => Array(resource)[1].name
               },
               "relationships" => {
-                "hooman" => {"data" => {"id" => "1", "type" => "people"}}
+                "hooman" => {
+                  "data" => {"id" => "1", "type" => "people"},
+                  "links" => hooman_link
+                    .for_relationship(the_cat)
+                    .each_with_object({}) do |(type, value), result|
+                      result[type] = value.gsub(/2/, "3")
+                    end
+                }
               }
             }
           ]
@@ -57,25 +65,31 @@ RSpec.describe SaboTabby::Document do
             "type" => "people",
             "attributes" => {"name" => hooman.name},
             "relationships" => {
-              "cats" => {"data" => [{"id" => "2", "type" => "cat"}]},
+              "cats" => {
+                "data" => [{"id" => "2", "type" => "cat"}],
+                "links" => {
+                  "related"=>"#{options[:url]}/hoomen/1/cats",
+                  "self"=>"#{options[:url]}/hoomen/1/relationships/cats"
+                }
+              },
               "jobs" => {"data" => [{"id" => "1", "type" => "job"}, {"id" => "2", "type" => "job"}]},
               "nap_spots" => {"data" => [{"id" => "3", "type" => "nap_spot"}]}
             },
             "meta" => {run_by: :cats},
-            "links" => {self: "http://localhost/hoomans/hooman-name-1"}
+            "links" => {"self" => "#{options[:url]}/hoomans/hooman-name-1"}
           },
           {
             "id" => "1",
             "type" => "nap_spot",
             "attributes" => {"name" => nap_spots[0].name},
-            "links" => {self: "http://localhost/nap-spots/1"},
+            "links" => {"self" => "#{options[:url]}/nap-spots/1"},
             "meta" => {if_i_fits: :i_sits}
           },
           {
             "id" => "2",
             "type" => "nap_spot",
             "attributes" => {"name" => nap_spots[1].name},
-            "links" => {self: "http://localhost/nap-spots/2"},
+            "links" => {"self" => "#{options[:url]}/nap-spots/2"},
             "meta" => {if_i_fits: :i_sits}
           },
           {"id" => "1", "type" => "sand_box"}
@@ -94,14 +108,14 @@ RSpec.describe SaboTabby::Document do
             "data" => {
               "attributes" => {"name" => "Chair"},
               "id" => "1",
-              "links" => {self: "http://localhost/nap-spots/1"},
+              "links" => {"self" => "#{options[:url]}/nap-spots/1"},
               "meta" => {if_i_fits: :i_sits},
               "type" => "nap_spot"
             }
           )
         end
         context "sparse fieldset" do
-          let(:options) { {fields: {"cat" => %w(name age)}} }
+          let(:options) { {fields: {"cat" => %w(name age)}}.merge(url_options) }
           let(:resource) { the_cat }
           it "returns resource document with only requested fieldset" do
             expect(JSON.generate(document.call)).to match_json_schema(:jsonapi)
@@ -120,7 +134,7 @@ RSpec.describe SaboTabby::Document do
           expect(document.call).to eq(document_collection_response)
         end
         context "sparse fieldset" do
-          let(:options) { {fields: {"cat" => %w(name age)}} }
+          let(:options) { {fields: {"cat" => %w(name age)}}.merge(url_options) }
           it "returns resource document with only requested fieldset" do
             expect(JSON.generate(document.call)).to match_json_schema(:jsonapi)
             expect(document.call).to eq(
@@ -132,7 +146,7 @@ RSpec.describe SaboTabby::Document do
         end
       end
       context "compound document" do
-        let(:options) { {include: %i(hooman nap_spots sand_box)} }
+        let(:options) { {include: %i(hooman nap_spots sand_box)}.merge(url_options) }
         context "single resource with relationships and included" do
           it "returns resource compound document" do
             expect(JSON.generate(document.call)).to match_json_schema(:jsonapi)
@@ -143,7 +157,7 @@ RSpec.describe SaboTabby::Document do
           end
           context "sparse fieldset" do
             let(:options) {
-              {include: %i(hooman nap_spots sand_box), fields: {"people" => %w(none)}}
+              {include: %i(hooman nap_spots sand_box), fields: {"people" => %w(none)}}.merge(url_options)
             }
             it "returns resource compound document with filtered attributes" do
               expect(JSON.generate(document.call)).to match_json_schema(:jsonapi)
@@ -160,13 +174,13 @@ RSpec.describe SaboTabby::Document do
           end
         end
         context "single resource with relationships and nested included" do
-          let(:options) { {include: %w(hooman.nap_spots nap_spots sand_box)} }
+          let(:options) { {include: %w(hooman.nap_spots nap_spots sand_box)}.merge(url_options) }
           let(:additional_nap_spot) {
             {
               "id" => "3",
               "type" => "nap_spot",
               "attributes" => {"name" => "Bed"},
-              "links" => {self: "http://localhost/nap-spots/3"},
+              "links" => {"self" => "#{options[:url]}/nap-spots/3"},
               "meta" => {if_i_fits: :i_sits}
             }
           }

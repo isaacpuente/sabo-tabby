@@ -28,15 +28,11 @@ module SaboTabby
       scope_settings
         .select { |k, _v| mapper_rel_keys.include?(k) }
         .each_with_object({}) do |(_name, settings), result|
-          rel = send(
-            settings[:cardinality],
-            relationship_scope(scope, settings[:scope]),
-            **settings
-          )
+          rel_scope = relationship_scope(scope, settings[:scope])
+          rel = send(settings[:cardinality], rel_scope, scope, **settings)
           next if rel.nil? || rel.empty?
 
-          result[settings[:key_name]] = {"data" => rel}
-            .merge!(links(scope, **settings))
+          result[settings[:key_name]] = {"data" => rel}.merge!(links(scope, **settings))
         end
     end
 
@@ -49,22 +45,20 @@ module SaboTabby
       parent_mapper.relationships.any?
     end
 
-    def one(scope, **settings)
+    def one(scope, parent_scope, **settings)
       return {} if scope.nil?
 
       {"type" => settings[:type], "id" => scope.send(settings[:identifier]).to_s}
     end
 
-    def many(scope, **settings)
-      scope.flatten.map { |s| one(s, **settings) }
+    def many(scope, parent_scope, **settings)
+      scope.flatten.map { |s| one(s, parent_scope, **settings) }
     end
 
     def links(scope, **settings)
-      return {} unless settings[:links]
-      return {} if settings[:links].all? { |_, v| v.empty? }
-
-      byebug
-      {}
+      parent.link
+        .for_relationship(scope, **settings)
+        .then { |result| result.any? ? {"links" => result} : {} }
     end
 
     def id_object(id)

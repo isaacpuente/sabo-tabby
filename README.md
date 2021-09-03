@@ -4,34 +4,23 @@
 
 # Table of Contents
 
-* [Installation](#installation)
-* [Features](#features)
+* [Quickstart](#quickstart)
 * [Usage](#usage)
-  * [Object Definition](#object-definition)
-  * [Mapper Definition](#mapper-definition)
-  * [Object Serialization](#object-serialization)
+  * [Mapper](#mapper)
   * [Compound Document](#compound-document)
   * [Collection Serialization](#collection-serialization)
-  * [Errors](#errors)
+  * [Sparse Fieldsets](#sparse-fieldsets)
+  * [Links](#links)
+  * [Options](#options)
   * [Pagination](#pagination)
   * [Auto compound](#auto-compound)
-  * [Params](#params)
-  * [Sparse Fieldsets](#sparse-fieldsets)
+  * [Errors](#errors)
 * [Contributing](#contributing)
 
 
-## Features
+## Quickstart
 
-* Mapper type determined based on class name
-* Support for `many` and `one` relationships
-* Support for compound documents (included)
-* Support for error documents (errors)
-* Support for pagination
-* Auto compound feature, define in mapper which relationship to include in compound documents
-
-## Installation
-
-Add this line to your application's Gemfile:
+Add following to your application's Gemfile:
 
 ```ruby
 gem 'sabo-tabby'
@@ -43,26 +32,49 @@ Execute:
 $ bundle install
 ```
 
-## Usage
-
-### Object Definition
+Resource can be any Ruby object
 
 ```ruby
-class Cat
-  attr_accessor :id, :name, :, :actor_ids, :owner_id, :movie_type_id
+class Role
+  attr_accessor :id, :name, :permissions
+
+  def initialize(id, name, permissions)
+    @id = id
+    @name = name,
+    @permissions = permissions
+  end
 end
 ```
 
-### Serializer Definition
+Mapper
 
 ```ruby
-class MovieMapper
+class RoleMapper
   include SaboTabby::Mapper
-  set_type :movie  # optional
-  set_id :owner_id # optional
-  attributes :name, :year
-  has_many :actors
-  belongs_to :owner, record_type: :user
-  belongs_to :movie_type
+
+  resource :role do
+    attributes :name, :permissions
+  end
 end
 ```
+
+Serialization
+
+```ruby
+admin = Role.new(1, :admin, %i(:read, :write, :delete))
+
+SaboTabby::Serialize.new(admin).as_json
+```
+
+
+
+## Features
+
+* Mapper type determined based on class name
+* Support for `many` and `one` relationships
+* Support for compound documents (included)
+* Support for error documents (errors)
+* Support for pagination
+* Auto compound feature, define in mapper which relationship to include in compound documents
+
+

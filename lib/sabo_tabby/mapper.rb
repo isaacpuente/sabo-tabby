@@ -152,8 +152,8 @@ module SaboTabby
         end
       end
 
-      def meta(**values)
-        _setting(:meta, values, {})
+      def meta(**values, &block)
+        _setting(:meta, [values, block], [{}, nil])
       end
 
       def one(name, **opts)

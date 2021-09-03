@@ -110,11 +110,11 @@ RSpec.describe SaboTabby::Resource do
     context "no meta mapper setting" do
       let(:mapper) { hooman_mapper }
       it "returns empty object" do
-        expect(resource.meta).to eq({})
+        expect(resource.meta(hooman)).to eq({})
       end
     end
     it "returns resource meta object" do
-      expect(resource.meta).to eq("meta" => {code_name: :feline})
+      expect(resource.meta(the_cat)).to eq("meta" => {code_name: :feline})
     end
   end
 end

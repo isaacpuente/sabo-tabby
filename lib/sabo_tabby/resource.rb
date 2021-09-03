@@ -58,10 +58,12 @@ module SaboTabby
         .then { |result| result.any? ? {"relationships" => result} : {} }
     end
 
-    def meta(_scope = nil)
+    def meta(scope)
       return {} unless meta?
 
-      {"meta" => mapper.meta}
+      values, block = mapper.meta
+      bresult = block ? block.(scope, **options) : {}
+      {"meta" => values.merge(bresult)} #.tap { |hmm| byebug }
     end
 
     def links(scope)
@@ -71,7 +73,7 @@ module SaboTabby
     end
 
     def meta?
-      mapper.meta.any?
+      mapper.meta.first.any? || mapper.meta.last
     end
 
     def document_id(scope)

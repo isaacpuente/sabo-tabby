@@ -30,7 +30,7 @@ RSpec.describe SaboTabby::Mapper do
         attributes: [],
         attribute: [],
         relationships: {},
-        meta: {}
+        meta: [{}, nil]
       }
     }
     context "without arg" do
@@ -84,15 +84,19 @@ RSpec.describe SaboTabby::Mapper do
             hooman: {method: :hooman, type: :people, cardinality: :one},
             sand_box: {method: :sand_box, cardinality: :one}
           },
-          meta: {code_name: :feline}
+          meta: [{code_name: :feline}, nil]
         }
       }
       it "initializes all settings" do
         dsl_methods.each do |method, value|
           case method
-          when :type, :attributes, :meta
+          when :type, :attributes
             expect(mapper.config).to respond_to("_#{method}")
             expect(mapper.config.send("_#{method}")).to eq(value)
+          when :meta
+            expect(mapper.config).to respond_to(:_meta)
+            expect(mapper.config.send(:_meta).first).to eq({code_name: :feline})
+            expect(mapper.config.send(:_meta).last).to be_nil
           when :attribute
             expect(mapper.config).to respond_to(:_dynamic_attributes)
             expect(mapper.config.send(:_dynamic_attributes)[0].first).to eq(:gender)
@@ -135,13 +139,13 @@ RSpec.describe SaboTabby::Mapper do
     let(:mapper) { HoomanMapper }
 
     it "sets meta" do
-      expect(mapper.meta).to eq(run_by: :cats)
+      expect(mapper.meta).to eq([{run_by: :cats}, nil])
     end
     context "not set" do
       let(:mapper) { SandBoxMapper }
 
-      it "is empty hash" do
-        expect(mapper.meta).to eq({})
+      it "is empty" do
+        expect(mapper.meta).to eq([{}, nil])
       end
     end
   end

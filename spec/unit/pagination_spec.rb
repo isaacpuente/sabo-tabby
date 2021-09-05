@@ -79,7 +79,7 @@ RSpec.describe SaboTabby::Pagination do
         let(:options) { {pager_klass: "unknown_pager"} }
         it "raises exception" do
           expect { pagination.call }.to(
-            raise_error(Dry::System::ComponentLoadError, /could not load component/)
+            raise_error(Dry::Container::Error, /Nothing registered with the key "mappers.pagers.unknown_page/)
           )
         end
       end

@@ -107,7 +107,7 @@ RSpec.describe SaboTabby::Mapper::Loader do
       context "unkown mapper name" do
         it "raises exception" do
           expect { described_class.new("dog", options) }.to(
-            raise_error(Dry::System::ComponentLoadError, /could not load component/)
+            raise_error(Dry::Container::Error, /Nothing registered with the key "mappers.string/)
           )
         end
       end

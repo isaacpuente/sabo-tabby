@@ -7,10 +7,10 @@ module SaboTabby
     configure do |config|
       config.root = Pathname(__FILE__).join("../..").realpath.dirname.freeze
       config.name = :sabo_tabby
-      config.component_dirs.add "lib"  do |dir|
-        dir.default_namespace = "sabo_tabby"
+      config.component_dirs.add "lib" do |dir|
+        dir.namespaces.add "sabo_tabby", key: nil
       end
-      config.component_dirs.add "system"
     end
   end
 end
+

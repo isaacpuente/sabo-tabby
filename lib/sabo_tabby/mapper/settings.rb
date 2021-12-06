@@ -19,7 +19,7 @@ module SaboTabby
 
         config["_#{name}"] = value
       else
-        setting("_#{name}", value, reader: true, &block)
+        setting("_#{name}", default: value, reader: true, &block)
       end
     end
 

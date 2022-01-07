@@ -51,7 +51,7 @@ module SaboTabby
 
             dsl_methods.each { |method_name| send(method_name) }
             yield if block_given?
-            SaboTabby::Container.register("mappers.pagers.#{name}", new)
+            SaboTabby::Container.register("mappers.pagers.#{name}", memoize: true) { new }
           end
         end
 

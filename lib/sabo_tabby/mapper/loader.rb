@@ -16,7 +16,7 @@ module SaboTabby
       param :name, default: proc { resource_name(resource) }
       param :resource_mapper, default: proc { mapper }
       param :mappers, default: proc {
-        {inflector.singularize(name) => resource_mapper}.tap do |mprs|
+        {inflector.singularize(name).to_sym => resource_mapper}.tap do |mprs|
           next if error?
 
           mprs.merge!(relationship_mappers)
@@ -30,10 +30,10 @@ module SaboTabby
       }
 
       param :compound_paths, default: proc {
-        next [] if error?
+        next EMPTY_ARRAY if error?
 
         if options.fetch(:include, false)
-          options[:include] == %w(none) ? [] : options[:include]
+          options[:include] == %w(none) ? EMPTY_ARRAY : options[:include]
         else
           _compound_paths(scope_settings)
         end.tap { |cp| mappers.merge!(compound_mappers(cp)) }
@@ -54,7 +54,7 @@ module SaboTabby
       def relationship_mappers(mapper = resource_mapper)
         mapper.relationships
           .each_with_object({}) do |(name, opts), mprs|
-            rel_name = inflector.singularize(opts.fetch(:as, name))
+            rel_name = inflector.singularize(opts.fetch(:as, name)).to_sym
             mprs[rel_name] ||= container["mappers.#{rel_name}"]
           end
       end
@@ -63,7 +63,7 @@ module SaboTabby
         @compound_mappers ||= paths
           .each_with_object({}) do |name, mprs|
           name.to_s.split(".").map do |n|
-            m_name = inflector.singularize(n)
+            m_name = inflector.singularize(n).to_sym
             mprs[m_name] ||= container["mappers.#{m_name}"]
             mprs.merge!(relationship_mappers(mprs[m_name]))
           end
@@ -124,8 +124,8 @@ module SaboTabby
       def _scope_settings(scope, resource_mapper, depth = 0)
         resource_mapper.relationships.each_with_object({}) do |(name, opts), result|
           rel_scope_name = scope_name(scope, opts[:method])
-          rel_name = opts.fetch(:as, name)
-          mapper_name = inflector.singularize(rel_name)
+          rel_name = opts.fetch(:as, name).to_sym
+          mapper_name = inflector.singularize(rel_name).to_sym
           mapper = mappers[mapper_name] || container["mappers.#{mapper_name}"]
 
           next if depth > options.fetch(:max_depth, 1) || rel_scope_name.nil? || mapper.nil?
@@ -140,7 +140,7 @@ module SaboTabby
 
       def setting_entry(scope, scope_name, mapper, mapper_name, depth, **relationship_opts)
         rel_type = relationship_opts[:type]
-        type = rel_type ? inflector.send(mapper.key_transformation, rel_type) : mapper.type
+        type = rel_type ? inflector.send(mapper.key_transformation, rel_type).to_sym : mapper.type
         relationship_opts
           .merge(
             {
@@ -148,6 +148,7 @@ module SaboTabby
               mapper_name: mapper_name,
               type: type,
               identifier: mapper.resource_identifier
+              # skeleton: {id: "", type: type}
             },
             _scope_settings(
               scope_message(scope, scope_name),

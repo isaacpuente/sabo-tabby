@@ -10,7 +10,7 @@ require "oj"
 require "yajl"
 require "simdjson"
 require "concurrent"
-require "sabo_tabby/document"
+require "sabo_tabby/jsonapi/document"
 require "sabo_tabby/options_contract"
 
 module SaboTabby
@@ -29,23 +29,10 @@ module SaboTabby
 
       validation.to_h
     }
-    param :document, default: proc { Document.new(resource, validated_options) }
+    param :document, default: proc { SaboTabby::JSONAPI::Document.new(resource, validated_options) }
 
-    def as_json(type: :to_json)
-      case type
-      when :fast_generate
-        JSON.fast_generate(as_hash, create_additions: false, quirks_mode: true)
-      when :oj
-        Oj.dump(as_hash)
-      when :yajl
-        Yajl::Encoder.encode(as_hash)
-      when :simdjson
-        JSON.dump(as_hash)
-      when :to_json
-        as_hash.to_json
-      else
-        "wrong generator"
-      end
+    def as_json
+      as_hash.to_json
     end
 
     def as_hash

@@ -6,16 +6,7 @@ require "sabo_tabby/mapper/standard_error"
 RSpec.describe SaboTabby::Mapper::Error do
   include_context "test_data"
 
-  let(:error_class) {
-    class_double("SaboTabby::Error", new: error)
-      .as_stubbed_const(transfer_nested_constants: true)
-  }
-  let(:error) { instance_double("SaboTabby::Error") }
   let(:error_mapper) { SaboTabby::Mapper::StandardError.new }
-
-  before do
-    stub_const("SaboTabby::Error", error_class)
-  end
 
   describe "#initialize" do
     let(:readers) { %i(type status code title detail origin resource name) }
@@ -26,7 +17,7 @@ RSpec.describe SaboTabby::Mapper::Error do
         when :name
           expect(error_mapper.send(r)).to eq(error_mapper.class.send(:resource))
         when :resource
-          expect(error_mapper.send(r)).to eq(error)
+          expect(error_mapper.send(r)).to be_a(SaboTabby::Error)
         when :detail, :origin
           expect(error_mapper.send(r)).to be_a(Proc)
         when :type

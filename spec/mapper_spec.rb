@@ -29,23 +29,25 @@ RSpec.describe SaboTabby::Mapper do
           expect(mapper.send(r)).to eq(mapper.class.send(:resource))
         when :attributes
           expect(mapper.send(r))
-            .to eq(mapper.class.send(r).each_with_object({}) { |a, res| res[a] = a.to_s })
+            .to eq(mapper.class.send(r).each_with_object({}) { |a, res| res[a] = a })
         when :dynamic_attributes
           expect(mapper.send(r)).to eq(
             mapper.class.send(r)
-              .each_with_object({}) { |(name, block), res| res[name] = [name.to_s, block] }
+              .each_with_object({}) { |(name, block), res| res[name] = [name, block] }
           )
         when :resource
           next
         when :key_transformation
           expect(mapper.send(r)).to eq :underscore
-        when :key_name, :type
-          expect(mapper.send(r)).to eq "cat"
+        when :type
+          expect(mapper.send(r)).to eq :cat
+        when :key_name
+          expect(mapper.send(r)).to eq :cat
         when :relationships
           expect(mapper.send(r)).to eq(
             mapper.class.send(r).each_with_object({}) do |(name, opts), relationships|
               relationships[name] =
-                opts.merge(key_name: name.to_s, type: opts[:type] && opts[:type].to_s)
+                opts.merge(key_name: name, type: opts[:type] && opts[:type])
             end
           )
         else
@@ -62,7 +64,7 @@ RSpec.describe SaboTabby::Mapper do
       context "mapper's class type has value" do
         let(:mapper_with_type) { HoomanMapper.new }
         it "sets mapper's class type as value" do
-          expect(mapper_with_type.type).to eq(mapper_with_type.class.send(:type).to_s)
+          expect(mapper_with_type.type).to eq(mapper_with_type.class.send(:type))
         end
       end
       context "mapper's class type is nil" do
@@ -80,7 +82,7 @@ RSpec.describe SaboTabby::Mapper do
         it "returns transformed key names" do
           expect(mapper.attributes).to eq(
             mapper.class.attributes.each_with_object({}) do |a, res|
-              res[a] = inflector.camelize(a.to_s)
+              res[a] = inflector.camelize(a).to_sym
             end
           )
         end
@@ -89,7 +91,7 @@ RSpec.describe SaboTabby::Mapper do
         it "returns transformed key names" do
           expect(mapper.dynamic_attributes).to eq(
             mapper.class.dynamic_attributes.each_with_object({}) do |(name, block), res|
-              res[name] = [inflector.camelize(name), block]
+              res[name] = [inflector.camelize(name).to_sym, block]
             end
           )
         end
@@ -100,7 +102,7 @@ RSpec.describe SaboTabby::Mapper do
             mapper.class.relationships.each_with_object({}) do |(name, opts), relationships|
               relationships[name] =
                 opts.merge(
-                  key_name: inflector.camelize(name),
+                  key_name: inflector.camelize(name).to_sym,
                   type: opts[:type] && inflector.camelize(opts[:type])
                 )
             end
@@ -109,7 +111,7 @@ RSpec.describe SaboTabby::Mapper do
       end
       context "key_name" do
         it "returns transformed key name" do
-          expect(mapper.key_name).to eq("Cat")
+          expect(mapper.key_name).to eq(:Cat)
         end
       end
     end

@@ -12,10 +12,10 @@ module SaboTabby
     include Dry::Core::Constants
 
     PAGE_LINK_MAPPING = {
-      "self" => :current,
-      "last" => :total_pages,
-      "prev" => :prev_page,
-      "next" => :next_page
+      self: :current,
+      last: :total_pages,
+      prev: :prev_page,
+      next: :next_page
     }.freeze
 
     param :mappers, default: proc { {} }
@@ -29,10 +29,10 @@ module SaboTabby
       return {} if pager.nil? || pager.send(total_records).zero?
 
       {
-        "links" => build_links,
-        "meta" => {
-          "total" => pager.send(total_records),
-          "pages" => pager.send(total_pages)
+        links: build_links,
+        meta: {
+          total: pager.send(total_records),
+          pages: pager.send(total_pages)
         }
       }
     end
@@ -46,7 +46,7 @@ module SaboTabby
     def meta
       return {} if pager.nil?
 
-      {"total" => pager.send(total_records), "pages" => pager.send(total_pages)}
+      {total: pager.send(total_records), pages: pager.send(total_pages)}
     end
 
     def pager
@@ -66,7 +66,7 @@ module SaboTabby
     end
 
     def build_links
-      PAGE_LINK_MAPPING.inject("first" => url(1, pager.send(page_size))) do |res, (key, method_name)|
+      PAGE_LINK_MAPPING.inject(first: url(1, pager.send(page_size))) do |res, (key, method_name)|
         send(method_name)
           .then do |name|
             res.merge(key => url(pager.send(name), pager.send(page_size)))

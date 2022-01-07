@@ -217,116 +217,17 @@ end
 
 RSpec.shared_context "mappers" do
   let(:key_transformation) { "underscore" }
-  let(:cat_mapper) {
-    instance_double(
-      "CatMapper",
-      name: :cat,
-      key_name: "cat",
-      resource_identifier: :id,
-      type: "cat",
-      attributes: {name: "name", age: "age", family: "family"},
-      meta: [{code_name: :feline}, nil],
-      dynamic_attributes: dynamic_attributes,
-      relationships: cat_mapper_relationships,
-      key_transformation: key_transformation,
-      links: {"self" => ["cats", nil]},
-      resource: instance_double(
-        "SaboTabby::Resource",
-        document_id: "cat_1",
-        type: "cat",
-        link: cat_link
-      )
-    )
-  }
-  let(:hooman_mapper) {
-    instance_double(
-      "HoomanMapper",
-      name: :hooman,
-      key_name: "hooman",
-      type: "people",
-      attributes: {name: "name"},
-      resource_identifier: :id,
-      meta: [{}, nil],
-      relationships: hooman_mapper_relationships,
-      key_transformation: key_transformation,
-      links: {"self" => ["hoomans", nil]},
-      resource: instance_double(
-        "SaboTabby::Resource",
-        document_id: "people_1",
-        type: "people",
-        link: hooman_link
-      )
-    )
-  }
-  let(:job_mapper) {
-    instance_double(
-      "JobMapper",
-      name: :job,
-      key_name: "job",
-      type: "job",
-      attributes: {name: "name"},
-      resource_identifier: :id,
-      key_transformation: key_transformation,
-      meta: [{}, nil],
-      relationships: job_mapper_relationships,
-      resource: instance_double(
-        "SaboTabby::Resource",
-        document_id: "job_1",
-        type: "job",
-        link: resource_link
-      )
-    )
-  }
-  let(:nap_spot_mapper) {
-    instance_double(
-      "NapSpotMapper",
-      name: :nap_spots,
-      key_name: "nap_spots",
-      type: "nap_spot",
-      attributes: {name: "name"},
-      meta: [{if_i_fits: :i_sits}, nil],
-      resource_identifier: :spot_id,
-      relationships: nap_spot_mapper_relationships,
-      links: {"self" => ["nap-spots", nil]},
-      key_transformation: key_transformation,
-      resource: instance_double(
-        "SaboTabby::Resource",
-        document_id: "nap_spot_1",
-        type: "nap_spot",
-        link: nap_spot_link
-      )
-    )
-  }
-  let(:sand_box_mapper) {
-    instance_double(
-      "SandBoxMapper",
-      name: :sand_box,
-      key_name: "sand_box",
-      type: "sand_box",
-      attributes: {},
-      meta: [{}, nil],
-      resource_identifier: :id,
-      key_transformation: key_transformation,
-      resource: instance_double(
-        "SaboTabby::Resource",
-        document_id: "sand_box_1",
-        type: "sand_box",
-        link: resource_link
-      ),
-      relationships: sand_box_mapper_relationships
-    )
-  }
   let(:cat_mapper_relationships) {
     {
       hooman: {
         method: :hooman,
         cardinality: :one,
         links: {related: "cats/%{resource_id}/mah-man", self: "cats/%{resource_id}/relationships/mah-man"},
-        key_name: "hooman",
+        key_name: :hooman,
         type: nil
       },
-      sand_box: {method: :sand_box, cardinality: :one, key_name: "sand_box", type: nil},
-      nap_spots: {method: :nap_spots, cardinality: :many, key_name: "nap_spots", type: nil}
+      sand_box: {method: :sand_box, cardinality: :one, key_name: :sand_box, type: nil},
+      nap_spots: {method: :nap_spots, cardinality: :many, key_name: :nap_spots, type: nil}
     }
   }
   let(:hooman_mapper_relationships) {
@@ -335,92 +236,19 @@ RSpec.shared_context "mappers" do
         as: :cats,
         method: :babies,
         cardinality: :many,
-        key_name: "cats",
-        type: "cat",
+        key_name: :cats,
+        type: :cat,
         links: {related: "%{resource_link}/cats", self: "%{resource_link}/relationships/cats"}
       },
-      jobs: {method: :jobs, cardinality: :many, key_name: "jobs", type: nil},
-      nap_spots: {method: :nap_spots, cardinality: :many, key_name: "nap_spots", type: nil}
+      jobs: {method: :jobs, cardinality: :many, key_name: :jobs, type: nil},
+      nap_spots: {method: :nap_spots, cardinality: :many, key_name: :nap_spots, type: nil}
     }
   }
   let(:job_mapper_relationships) {
-    {cat: {method: :cat, cardinality: :one, key_name: "cat", type: nil}}
+    {cat: {method: :cat, cardinality: :one, key_name: :cat, type: nil}}
   }
   let(:nap_spot_mapper_relationships) {
-    {cat: {method: :cat, cardinality: :one, key_name: "cat, type: nil"}}
+    {cat: {method: :cat, cardinality: :one, key_name: :cat, type: nil}}
   }
   let(:sand_box_mapper_relationships) { {} }
-  let(:loaded_mappers) {
-    {
-      "cat" => cat_mapper,
-      "hooman" => hooman_mapper,
-      "job" => job_mapper,
-      "nap_spot" => nap_spot_mapper,
-      "sand_box" => sand_box_mapper
-    }
-  }
-  let(:loaded_error_mappers) { {"standard_error" => standard_error_mapper} }
-  let(:validation_error_mapper) {
-    instance_double(
-      "ValidationErrorMapper",
-      name: :validation_error,
-      type: :validation_error,
-      status: 422,
-      title: "Validation error",
-      detail: proc { |error| "#{error.message} Name must be filled" },
-      code: "3",
-      origin: proc { "/data/origin" },
-      resource: instance_double("SaboTabby::Error")
-    )
-  }
-  let(:standard_error_mapper) {
-    instance_double(
-      "SaboTabby::Mapper::StandardError",
-      name: :standard_error,
-      type: :standard_error,
-      status: 400,
-      title: "Error",
-      detail: proc { |error| "#{error.message} User must exist." },
-      code: "4",
-      origin: proc { nil },
-      resource: instance_double("SaboTabby::Error")
-    )
-  }
-  let(:default_pagination_mapper) {
-    instance_double(
-      "SaboTabby::Mapper::DefaultPagination",
-      name: :default_pagination,
-      current: :current_page,
-      first: :first_in_page,
-      last: :last_in_page,
-      next_page: :next_page,
-      prev_page: :prev_page,
-      page_size: :per_page,
-      total_pages: :total_pages,
-      total_records: :total,
-      pager: pager
-    )
-  }
-  let(:custom_pagination_mapper) {
-    instance_double(
-      "CustomPagination",
-      name: :custom_pagination,
-      current: :this_page,
-      first: :first,
-      last: :last,
-      next_page: :next,
-      prev_page: :prev,
-      page_size: :page_size,
-      total_pages: :pages,
-      total_records: :total_records,
-      pager: custom_pager
-    )
-  }
-  before do
-    %i(cat_mapper hooman_mapper nap_spot_mapper sand_box_mapper).each do |mapper|
-      allow(send(mapper).resource).to receive(:options).and_return(options)
-      allow(send(mapper).resource).to receive(:mapper).and_return(send(mapper))
-      allow(send(mapper).resource).to receive(:mappers).and_return(loaded_mappers)
-    end
-  end
 end

@@ -14,7 +14,7 @@ RSpec.describe SaboTabby::Mapper do
     let(:mapper) { LittleHooman.new }
 
     it "initializes superclass settings first" do
-      expect(mapper.type).to eq("people")
+      expect(mapper.type).to eq(:people)
     end
     it "adds specialized settings" do
       expect(mapper.name).to eq(:little_hooman)

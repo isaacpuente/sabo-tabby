@@ -5,9 +5,7 @@
 require "dry-initializer"
 require "dry-core"
 require "sabo_tabby/mapper/settings"
-require "sabo_tabby/resource"
-require "sabo_tabby/relationship"
-require "sabo_tabby/link"
+require "sabo_tabby/jsonapi/resource"
 
 module SaboTabby
   module Mapper
@@ -39,7 +37,7 @@ module SaboTabby
       def resource(mappers: {}, **options)
         return @resource if same_resource?(mappers, options)
 
-        @resource = SaboTabby::Resource.new(self, options, mappers)
+        @resource = SaboTabby::JSONAPI::Resource.new(self, options, mappers)
       end
 
       def container
@@ -58,29 +56,29 @@ module SaboTabby
 
       def _attributes
         self.class.attributes.each_with_object({}) do |name, attrs|
-          attrs[name] = inflector.send(key_transformation, name)
+          attrs[name] = inflector.send(key_transformation, name).to_sym
         end
       end
 
       def _dynamic_attributes
         self.class.dynamic_attributes.each_with_object({}) do |(*names, block), attrs|
-          names.each { |name| attrs[name] = [inflector.send(key_transformation, name), block] }
+          names.each { |name| attrs[name] = [inflector.send(key_transformation, name).to_sym, block] }
         end
       end
 
       def _type
-        self.class.type.nil? ? key_name : inflector.send(key_transformation, self.class.type)
+        self.class.type.nil? ? key_name : inflector.send(key_transformation, self.class.type).to_sym
       end
 
       def _key_name
-        inflector.send(key_transformation, name)
+        inflector.send(key_transformation, name).to_sym
       end
 
       def _relationships
         self.class.relationships.each_with_object({}) do |(name, opts), rels|
           rels[name] = opts.merge(
-            key_name: inflector.send(key_transformation, name),
-            type: opts[:type] && inflector.send(key_transformation, opts[:type])
+            key_name: inflector.send(key_transformation, name).to_sym,
+            type: opts[:type] && inflector.send(key_transformation, opts[:type]).to_sym
           )
         end
       end
@@ -99,7 +97,7 @@ module SaboTabby
 
           dsl_methods.each { |method_name| send(method_name) }
           yield if block_given?
-          container.register("mappers.#{name}", new) unless container.key?("mappers.#{name}")
+          container.register("mappers.#{name}", memoize: true) { new } unless container.key?("mappers.#{name}")
         end
       end
 

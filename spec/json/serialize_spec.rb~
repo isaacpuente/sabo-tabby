@@ -1,0 +1,13 @@
+# frozen_string_literal: true
+
+RSpec.describe SaboTabby::Serialize do
+  include_context "test_data"
+
+  subject(:serializer) { described_class.new(resource, options) }
+
+  let(:resource) { the_cat }
+
+  let(:options) { {} }
+
+
+end

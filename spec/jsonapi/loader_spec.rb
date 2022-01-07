@@ -12,13 +12,13 @@ RSpec.describe SaboTabby::Mapper::Loader do
   let(:resource) { the_cat }
   let(:resource_mapper) { CatMapper.new }
   let(:const) {
-    -> key {  Object.const_get("#{key.split("_").map(&:capitalize).join("")}Mapper") }
+    -> key {  Object.const_get("#{key.to_s.split("_").map(&:capitalize).join("")}Mapper") }
   }
 
   describe "success" do
     context "mappers" do
       it "initializes all resource's relationship mappers" do
-        keys = %w(cat hooman sand_box nap_spot)
+        keys = %i(cat hooman sand_box nap_spot)
         expect(loader.mappers.keys).to eq(keys)
         keys.each do |key|
           expect(loader.mappers[key]).to be_a(const.(key))
@@ -27,7 +27,7 @@ RSpec.describe SaboTabby::Mapper::Loader do
       context "compound" do
         let(:options) { {include: %w(hooman nap_spots)} }
         it "initializes all resource's relationship mappers and compound mappers" do
-          keys = %w(cat hooman sand_box nap_spot job)
+          keys = %i(cat hooman sand_box nap_spot job)
           expect(loader.mappers.keys).to eq(keys)
           keys.each do |key|
             expect(loader.mappers[key]).to be_a(const.(key))
@@ -39,7 +39,7 @@ RSpec.describe SaboTabby::Mapper::Loader do
         let(:resource_mapper) { ProjectMapper.new }
 
         it "initializes all mappers" do
-          keys = %w(project project_type user asset tag role)
+          keys = %i(project project_type user asset tag role)
           expect(loader.mappers.keys).to eq(keys)
           keys.each do |key|
             expect(loader.mappers[key]).to be_a(const.(key))
@@ -48,7 +48,7 @@ RSpec.describe SaboTabby::Mapper::Loader do
         context "options include" do
           let(:options) { {include: %w(project.assets)} }
           it "initializes included mappers" do
-            keys = %w(project project_type user asset tag)
+            keys = %i(project project_type user asset tag)
             expect(loader.mappers.keys).to eq(keys)
             keys.each do |key|
               expect(loader.mappers[key]).to be_a(const.(key))
@@ -99,6 +99,15 @@ RSpec.describe SaboTabby::Mapper::Loader do
             expect(loader.compound_paths).to eq(options[:include])
           end
         end
+      end
+    end
+  end
+  context "failure" do
+    context "unkown mapper name" do
+      it "raises exception" do
+        expect { described_class.new("dog", options) }.to(
+          raise_error(Dry::Container::Error, /Nothing registered with the key "mappers.string/)
+        )
       end
     end
   end

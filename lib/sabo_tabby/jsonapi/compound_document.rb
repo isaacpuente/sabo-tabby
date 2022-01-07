@@ -1,13 +1,11 @@
 # frozen_string_literal: true
 
-# auto_register: false
-
 require "dry-initializer"
 require "sabo_tabby/helpers"
 
 module SaboTabby
-  class Document
-    class Compound
+  module JSONAPI
+    class CompoundDocument
       extend Dry::Initializer
       include Dry::Core::Constants
       include Helpers
@@ -19,16 +17,16 @@ module SaboTabby
       param :compound_paths, default: proc { loader.compound_paths }
 
       def call(scope)
-        return {} if compound_paths.empty?
+        return EMPTY_HASH if compound_paths.empty?
 
         compound_paths
           .each_with_object([]) { |path, compound| compound.concat(document(scope, path)) }
-          .then { |compound| compound.any? ? {"included" => compound} : {} }
+          .then { |compound| compound.any? ? {included: compound} : EMPTY_HASH }
       end
 
       private
 
-      def scope_name(scope, name = "")
+      def scope_name(scope, name = EMPTY_STRING)
         Array(scope).last.then do |scp|
           next scp.class.send(:sabotabby_mapper) if scp.class.respond_to?(:sabotabby_mapper)
 
@@ -60,7 +58,7 @@ module SaboTabby
       end
 
       def compound_scope(scope, **settings)
-        return [] if settings.empty?
+        return EMPTY_ARRAY if settings.empty?
 
         Array(scope).flat_map do |sco|
           next if sco.nil?
@@ -74,7 +72,7 @@ module SaboTabby
       def resource_document(scope, name, **settings)
         resource = resource(scope_name(scope), name)
         document_id = resource.document_id(scope)
-        return [] if included_documents[document_id] || scope.nil?
+        return EMPTY_ARRAY if included_documents[document_id] || scope.nil?
 
         Array(scope)
           .map { |sc| resource.document(sc, **settings) }
@@ -83,10 +81,12 @@ module SaboTabby
 
       def resource(scope_name, name)
         mapper(scope_name, name).resource(mappers: mappers, **options)
+      rescue => e
+        byebug
       end
 
       def mapper(scope_name, name)
-        mappers[scope_name] || mappers[name]
+        mappers[scope_name.to_sym] || mappers[name.to_sym]
       end
     end
   end

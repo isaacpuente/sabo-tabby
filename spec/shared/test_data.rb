@@ -136,6 +136,7 @@ RSpec.shared_context "test_data" do
     ]
   }
   let(:sand_box) { SandBox.new(id: 1) }
+
   let(:the_cat) {
     Cat.new(
       id: 2,
@@ -148,6 +149,7 @@ RSpec.shared_context "test_data" do
       sand_box: sand_box
     ).tap { |cat| hooman.babies << cat }
   }
+
   let(:new_cat) {
     Cat.new(
       id: 3,
@@ -161,61 +163,21 @@ RSpec.shared_context "test_data" do
     ).tap { |cat| hooman.babies << cat }
   }
   let(:attribute_result) {
-    {"age" => 9, "family" => "Domestic", "gender" => "Ms. Le prr", "name" => "Nibbler"}
+    {age: 9, family: "Domestic", gender: "Ms. Le prr", name: "Nibbler"}
   }
   let(:relationship_result) {
     {
-      "relationships" => {
-        "hooman" => {"data" => {"id" => "1", "type" => "people"}, "links" => hooman_link.for_relationship(the_cat)},
-        "nap_spots" => {"data" => [
-          {"id" => "1", "type" => "nap_spot"}, {"id" => "2", "type" => "nap_spot"}
+      relationships: {
+        hooman: {data: {id: "1", type: :people}, links: {related: "http://localhost/cats/2/mah-man", self:"http://localhost/cats/2/relationships/mah-man"}},
+        nap_spots: {data: [
+          {id: "1", type: :nap_spot}, {id: "2", type: :nap_spot}
         ]},
-        "sand_box" => {"data" => {"id" => "1", "type" => "sand_box"}}
+        sand_box: {data: {id: "1", type: :sand_box}}
       }
     }
   }
   let(:host) { "http://localhost" }
-  let(:link_result) { {"links" => {}} }
-  let(:resource_relationship) { instance_double("SaboTabby::Relationship") }
-  let(:resource_attribute) { instance_double("SaboTabby::Attribute") }
-  let(:resource_link) { instance_double("SaboTabby::Link") }
-  let(:cat_link) {
-    instance_double(
-      "SaboTabby::Link",
-      for_resource: {},
-      for_relationship: {
-        "related" => "#{host}/hoomens/hoomen-1/cats",
-        "self" => "#{host}/hoomens/hoomen-1/relationships/cats"
-      }
-    )
-  }
-  let(:hooman_link) {
-    instance_double(
-      "SaboTabby::Link",
-      for_resource: {"self" => "#{host}/hoomen/hoomen-1"},
-      for_relationship: {
-        "related" => "#{host}/cats/#{the_cat.id}/mah-man",
-        "self" => "#{host}/cats/#{the_cat.id}/relationships/mah-man"
-      }
-    )
-  }
-  let(:nap_spot_link) {
-    instance_double(
-      "SaboTabby::Link",
-      for_resource: {"self" => "#{host}/nap-spots/1"},
-      for_relationship: {}
-    )
-  }
-  let(:user_link) {
-    instance_double(
-      "SaboTabby::Link",
-      for_resource: {},
-      for_relationship: {
-        "related" => "#{host}/projects/1/users",
-        "self" => "#{host}/projects/1/relationships/users"
-      }
-    )
-  }
+  let(:link_result) { {links: {}} }
   let(:dynamic_attributes) {
     {gender: ["gender", proc { |value| value == :f ? "Ms. Le prr" : "Mr. Le prr" }]}
   }
@@ -282,82 +244,82 @@ RSpec.shared_context "test_data" do
         cardinality: :many,
         identifier: :id,
         include: true,
-        mapper_name: "asset",
+        mapper_name: :asset,
         method: :assets,
         project: {
           cardinality: :one,
           identifier: :id,
-          mapper_name: "project",
+          mapper_name: :project,
           method: :project,
           scope: :project,
-          type: "project",
-          key_name: "project"
+          type: :project,
+          key_name: :project
         },
         scope: :assets,
         tags: {
           cardinality: :many,
           identifier: :id,
           include: true,
-          mapper_name: "tag",
+          mapper_name: :tag,
           method: :tags,
           scope: :tags,
-          type: "tag",
-          key_name: "tags"
+          type: :tag,
+          key_name: :tags
         },
-        type: "asset",
-        key_name: "assets"
+        type: :asset,
+        key_name: :assets
       },
       project_type: {
         as: :project_type,
         cardinality: :one,
         identifier: :id,
         include: true,
-        mapper_name: "project_type",
+        mapper_name: :project_type,
         method: :type,
         scope: :type,
-        type: "project_type",
-        key_name: "project_type"
+        type: :project_type,
+        key_name: :project_type
       },
       tags: {
         cardinality: :many,
         identifier: :id,
         include: true,
-        mapper_name: "tag",
+        mapper_name: :tag,
         method: :tags,
         scope: :tags,
-        type: "tag",
-        key_name: "tags"
+        type: :tag,
+        key_name: :tags
       },
       users: {
         cardinality: :many,
         identifier: :id,
         include: true,
         links: {related: "%{resource_link}/users", self: "%{resource_link}/relationships/users"},
-        mapper_name: "user",
+        mapper_name: :user,
         method: :users,
         projects: {
           cardinality: :many,
           identifier: :id,
           include: true,
-          mapper_name: "project",
+          mapper_name: :project,
           method: :projects,
           scope: :projects,
-          type: "project",
-          key_name: "projects"
+          type: :project,
+          key_name: :projects
         },
         role: {
           cardinality: :one,
           identifier: :id,
           include: true,
-          mapper_name: "role",
+          mapper_name: :role,
           method: :role,
           scope: :role,
-          type: "role",
-          key_name: "role"
+          type: :role,
+          key_name: :role
         },
         scope: :users,
-        type: "user",
-        key_name: "users"
+        type: :user,
+        key_name: :users
       }
     }
   }
@@ -367,26 +329,26 @@ RSpec.shared_context "test_data" do
   let(:scope_settings_cat) {
     {
       as: :cats,
-      type: "cat",
-      key_name: "cats",
+      type: :cat,
+      key_name: :cats,
       method: :babies,
       cardinality: :many,
       scope: :babies,
       identifier: :id,
-      mapper_name: "cat",
+      mapper_name: :cat,
       links: {related: "%{resource_link}/cats", self: "%{resource_link}/relationships/cats"},
     }
   }
   let(:scope_settings_hooman) {
     {
-      type: "people",
-      key_name: "hooman",
+      type: :people,
+      key_name: :hooman,
       method: :hooman,
       scope: :hooman,
       cardinality: :one,
       identifier: :id,
       links: {self: "cats/%{resource_id}/relationships/mah-man", related: "cats/%{resource_id}/mah-man"},
-      mapper_name: "hooman"
+      mapper_name: :hooman
     }
   }
   let(:scope_settings_job) {
@@ -395,31 +357,31 @@ RSpec.shared_context "test_data" do
       identifier: :id,
       method: :jobs,
       scope: :jobs,
-      key_name: "jobs",
-      type: "job",
-      mapper_name: "job"
+      key_name: :jobs,
+      type: :job,
+      mapper_name: :job
     }
   }
   let(:scope_settings_nap_spot) {
     {
       scope: :nap_spots,
-      key_name: "nap_spots",
-      type: "nap_spot",
+      key_name: :nap_spots,
+      type: :nap_spot,
       identifier: :spot_id,
       cardinality: :many,
       method: :nap_spots,
-      mapper_name: "nap_spot"
+      mapper_name: :nap_spot
     }
   }
   let(:scope_settings_sandbox) {
     {
       scope: :sand_box,
-      key_name: "sand_box",
-      type: "sand_box",
+      key_name: :sand_box,
+      type: :sand_box,
       identifier: :id,
       cardinality: :one,
       method: :sand_box,
-      mapper_name: "sand_box"
+      mapper_name: :sand_box
     }
   }
 

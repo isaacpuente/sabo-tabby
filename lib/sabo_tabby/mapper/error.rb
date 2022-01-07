@@ -48,7 +48,7 @@ module SaboTabby
 
             dsl_methods.each { |method_name| send(method_name) }
             yield if block_given?
-            SaboTabby::Container.register("mappers.errors.#{name}", new)
+            SaboTabby::Container.register("mappers.errors.#{name}", memoize: true) { new }
           end
         end
 
@@ -60,8 +60,8 @@ module SaboTabby
           _setting(:type, value)
         end
 
-        def code(value = "")
-          _setting(:code, value, "")
+        def code(value = EMPTY_STRING)
+          _setting(:code, value, EMPTY_STRING)
         end
 
         def title(value = "Error")

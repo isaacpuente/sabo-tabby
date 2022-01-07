@@ -12,18 +12,18 @@ RSpec.describe SaboTabby::Mapper::Loader do
   let(:resource) { the_cat }
   let(:resource_name) { cat_mapper.name.to_s }
 
-  before do
-    loaded_mappers.each do |key, mapper|
-      container.stub("mappers.#{key}", mapper)
-    end
-    container.stub("mappers.errors.standard_error", standard_error_mapper)
-  end
-  after do
-    loaded_mappers.each do |key, _mapper|
-      container.unstub("mappers.#{key}")
-    end
-    container.unstub("mappers.errors.standard_error")
-  end
+  # before do
+  #   loaded_mappers.each do |key, mapper|
+  #     container.stub("mappers.#{key}", mapper)
+  #   end
+  #   container.stub("mappers.errors.standard_error", standard_error_mapper)
+  # end
+  # after do
+  #   loaded_mappers.each do |key, _mapper|
+  #     container.unstub("mappers.#{key}")
+  #   end
+  #   container.unstub("mappers.errors.standard_error")
+  # end
 
   describe "#initialize" do
     it "sets readers" do
@@ -39,7 +39,7 @@ RSpec.describe SaboTabby::Mapper::Loader do
       let(:resource_name) { "standard_error" }
       let(:resource) { StandardError.new("oops") }
       it "sets readers" do
-        expect(loader.mappers).to eq({resource_name => standard_error_mapper})
+        expect(loader.mappers).to eq({resource_name.to_sym => standard_error_mapper})
         expect(loader.compound_paths).to eq([])
         expect(loader.scope_settings).to eq({})
       end

@@ -328,13 +328,13 @@ RSpec.describe SaboTabby::JSONAPI::Document do
 
     describe "#resource_name" do
       it "returns resource class name snake cased" do
-        expect(document.resource_name(resource)).to eq("cat")
+        expect(document.resource_name(resource)).to eq(:cat)
       end
       context "collection" do
         let(:resource) { nap_spots }
 
         it "returns first element resource class name snake cased" do
-          expect(document.resource_name(resource)).to eq("nap_spot")
+          expect(document.resource_name(resource)).to eq(:nap_spot)
         end
       end
     end

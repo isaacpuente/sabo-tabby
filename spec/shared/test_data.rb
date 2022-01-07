@@ -73,7 +73,6 @@ def new_user(**data)
 end
 
 RSpec.shared_context "test_data" do
-
   let(:project_types) {
     [ProjectType.new(id: 1, name: "External"), ProjectType.new(id: 2, name: "Internal")]
   }

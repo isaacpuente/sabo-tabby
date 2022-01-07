@@ -86,7 +86,7 @@ module SaboTabby
       end
 
       def mapper(scope_name, name)
-        mappers[scope_name.to_sym] || mappers[name.to_sym]
+        mappers[scope_name] || mappers[name.to_sym]
       end
     end
   end

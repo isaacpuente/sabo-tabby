@@ -6,11 +6,8 @@ require "dry-initializer"
 require "dry-core"
 require "forwardable"
 require "json/ext"
-require "oj"
-require "yajl"
-require "simdjson"
-require "concurrent"
 require "sabo_tabby/jsonapi/document"
+require "sabo_tabby/json/document"
 require "sabo_tabby/options_contract"
 
 module SaboTabby
@@ -29,14 +26,15 @@ module SaboTabby
 
       validation.to_h
     }
-    param :document, default: proc { SaboTabby::JSONAPI::Document.new(resource, validated_options) }
+    param :jsonapi_document, default: proc { SaboTabby::JSONAPI::Document.new(resource, validated_options) }
+    param :json_document, default: proc { SaboTabby::JSON::Document.new(resource, validated_options) }
 
-    def as_json
-      as_hash.to_json
+    def as_json(type: :jsonapi)
+      as_hash(type: type).to_json
     end
 
-    def as_hash
-      document.call
+    def as_hash(type: :jsonapi)
+      send("#{type}_document").call
     end
   end
 end

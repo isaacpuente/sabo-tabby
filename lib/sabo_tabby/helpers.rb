@@ -11,6 +11,7 @@ module SaboTabby
             .split(/(?=\p{upper}\p{lower}+)/)
             .map(&:downcase)
             .join("_")
+            .to_sym
         end
     end
 
